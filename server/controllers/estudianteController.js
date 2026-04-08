@@ -26,8 +26,8 @@ exports.matricularEstudiante = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashPass = await bcrypt.hash(contrasena, salt);
         const [usuarioRes] = await connection.query(
-            `INSERT INTO usuario (rol_id_rol, nombre_usuario, contrasena, correo_electronico, telefono)
-            VALUES (3, ?, ?, ?, ?)`,
+            `INSERT INTO usuario (rol_id_rol, nombre_usuario, contrasena, correo_electronico, telefono, activo)
+            VALUES (3, ?, ?, ?, ?, 1)`,
             [nombre_usuario, hashPass, correo_electronico, telefono]
         );
 

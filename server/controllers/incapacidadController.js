@@ -14,7 +14,7 @@ const storage = multer.diskStorage(
             cb(null,dir);
         },
         filename: function (req, file, cb) {
-            const uniqueSuffix = DataTransfer.now() + '-' + Math.round(Math.random() * 1E9);
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
             cb(null, 'incap-' + uniqueSuffix + path.extname(file.originalname));
 
         }
@@ -90,9 +90,10 @@ exports.obtenerIncapacidades = async (req, res) => {
 
     try {
         const [lista] = await db.query(
-            `SELECT i.*, u.nombre, u.apellido
+            `SELECT i.*, p.nombres, p.apellido_paterno, p.apellido_materno, d.especialidad
             FROM incapacidad i
-            JOIN usuario u ON i.docente_id_docente = u.id_usuario
+            JOIN docente d ON i.docente_id_docente = d.id_docente
+            JOIN persona p ON d.persona_id_persona = p.id_persona
             ORDER BY i.fecha_inicio DESC`
         );
         res.json(lista);
@@ -101,5 +102,20 @@ exports.obtenerIncapacidades = async (req, res) => {
             msg: "Error al obtener la lista", 
             error: error.message
         });
+    }
+};
+
+exports.revisarIncapacidad = async (req, res) => {
+    const { id_incapacidad } = req.params;
+    const { nuevo_estado } = req.body; // 'aprobada' o 'rechazada'
+
+    try {
+        await db.query(
+            "UPDATE incapacidad SET estado = ? WHERE id_incapacidad = ?",
+            [nuevo_estado, id_incapacidad]
+        );
+        res.json({ msg: `Incapacidad ${nuevo_estado} correctamente` });
+    } catch (error) {
+        res.status(500).json({ msg: "Error al actualizar estado", error: error.message });
     }
 };

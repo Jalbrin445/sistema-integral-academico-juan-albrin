@@ -7,7 +7,8 @@ exports.registrarDocente = async (req, res) => {
         tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno,
         fecha_nacimiento, genero, telefono, correo_electronico, direccion,
         nombre_usuario, contrasena, 
-        codigo_docente, titulo_profesional,especialidad
+        codigo_docente, titulo_profesional,especialidad,
+        estado_admin
     } = req.body;
 
     try {
@@ -26,8 +27,8 @@ exports.registrarDocente = async (req, res) => {
         const hashPass = await bcrypt.hash(contrasena, salt);
 
         const [usuarioRes] = await connection.query(
-            `INSERT INTO usuario (rol_id_rol, nombre_usuario, contrasena, correo_electronico, telefono)
-            VALUES (2, ?, ?, ?, ?)`,
+            `INSERT INTO usuario (rol_id_rol, nombre_usuario, contrasena, correo_electronico, telefono, activo)
+            VALUES (2, ?, ?, ?, ?, 1)`,
             [nombre_usuario, hashPass, correo_electronico, telefono]
         );
 
@@ -35,12 +36,15 @@ exports.registrarDocente = async (req, res) => {
 
         await connection.query(
             `INSERT INTO docente (codigo_docente, titulo_profesional, especialidad, fecha_ingreso, estado, persona_id_persona, usuario_id_usuario)
-            VALUES (?, ?, ?, CURDATE(), 'activo', ?, ?)`,
-            [codigo_docente, titulo_profesional, especialidad, id_persona, id_usuario]
+            VALUES (?, ?, ?, CURDATE(), ?, ?, ?)`,
+            [codigo_docente, titulo_profesional, especialidad, estado_admin || 'activo',id_persona, id_usuario]
         );
 
         await connection.commit();
-        res.status(201).json({ msg:"Docente vinculado al sistema con éxito" });
+        res.status(201).json({ 
+            msg:"Docente vinculado al sistema con éxito",
+            detalles: { usuario_id: id_usuario, persona_id: id_persona}
+        });
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Error en registro docente:", error);

@@ -18,7 +18,7 @@ app.use('/api/materias', require('./routes/materiaRoutes'));
 app.use('/api/asignaciones', require('./routes/asignacionRoutes'));
 app.use('/api/notas', require('./routes/notaRoutes'));
 app.use('/api/incapacidades', require('./routes/incapacidadRoutes'));
-
+app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

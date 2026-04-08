@@ -18,7 +18,12 @@ exports.registrarNota = async (req, res) => {
     try {
         
         const [resultado] = await db.query(
-            `INSERT INTO calificacion (nota, observaciones, fecha_registro, criterio_evaluacion_id_criterio, estudiante_id_estudiante, asignacion_materia_id_asignacion, docente_id_docente, periodo_academico_id_periodo)
+            `INSERT INTO calificacion (
+            nota, observaciones, fecha_registro, 
+            criterio_evaluacion_id_criterio, 
+            estudiante_id_estudiante, 
+            asignacion_materia_id_asignacion, 
+            docente_id_docente, periodo_academico_id_periodo)
             VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?)`,
             [nota, observaciones, criterio_id, estudiante_id, asignacion_id, docente_id, periodo_id]
         );
@@ -124,14 +129,13 @@ exports.obtenerResumenMateriasEstudiante = async (req, res) => {
             ROUND(IFNULL(SUM(c.nota * (ce.porcentaje / 100)), 0), 2) AS nota_parcial
             FROM asignacion_materia a
             JOIN materia m ON a.materia_id_materia = m.id_materia
-            JOIN usuario u_docente ON a.docente_id_docente = u_docente.id_usuario
-            JOIN persona p ON u_docente.id_usuario = p.id_persona 
+            JOIN docente d ON a.docente_id_docente = d.id_docente
+            JOIN persona p ON d.persona_id_persona = p.id_persona 
             LEFT JOIN calificacion c ON c.asignacion_materia_id_asignacion = a.id_asignacion 
             AND c.estudiante_id_estudiante = ?
             LEFT JOIN criterio_evaluacion ce ON c.criterio_evaluacion_id_criterio = ce.id_criterio
-            WHERE c.estudiante_id_estudiante = ? OR c.estudiante_id_estudiante IS NULL
-            GROUP BY a.id_asignacion, m.nombre_materia, m.descripcion, p.nombres, p.apellido_paterno, p.apellido_materno`,
-            [id_estudiante, id_estudiante]
+            GROUP BY a.id_asignacion`,
+            [id_estudiante]
         );
 
         if (materias.length === 0) {
@@ -187,7 +191,6 @@ exports.crearCriterioEvaluacion = async (req, res) => {
 };
 
 
-
 exports.obtenerDetalleCriteriosEstudiante = async (req, res) => {
     const { id_asignacion, id_estudiante } = req.params;
 
@@ -218,6 +221,32 @@ exports.obtenerDetalleCriteriosEstudiante = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             msg: "Error al obtener el detalle", error: error.message
+        });
+    }
+};
+
+exports.listarCriteriosPorAsignacion = async (req, res) => {
+
+    const { id_asignacion } = req.params;
+
+    try {
+        const [criterios] = await db.query(
+        `SELECT id_criterio, nombre_criterio, porcentaje
+        FROM criterio_evaluacion
+        WHERE asignacion_materia_id_asignacion = ? AND activo = 1`,
+        [id_asignacion]
+        );
+
+        if (criterios.length === 0) {
+            return res.status(404).json({
+                msg: "No hay criterios configurados."
+            });
+        }
+        res.json(criterios);
+    } catch (error) {
+        res.status(500).json({
+            msg: "Error al obtenr criterios",
+            error: error.message
         });
     }
 };

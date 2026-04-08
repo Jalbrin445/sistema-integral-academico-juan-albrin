@@ -17,7 +17,12 @@ exports.login = async (req, res) => {
 
         const user = rows[0];
 
-        
+        if (Number(user.activo) === 0) {
+            return res.status(403).json({
+                msg: "Acceso denegado: esta cuenta ha sido desactivada por la administración del SIA."
+            });
+        }
+
         const validPass = await bcrypt.compare(contrasena, user.contrasena);
         if (!validPass) return res.status(400).json({msg:"Contraseña incorrecta"});
 
@@ -28,12 +33,22 @@ exports.login = async (req, res) => {
             {expiresIn: '8h'}
         );
 
+        await db.query(`
+            UPDATE usuario SET ultimo_acceso = NOW()
+            WHERE id_usuario = ?
+            `, [user.id_usuario]);
+
         res.json({
             token,
-            user: {id: user.id_usuario, nombre: user.nombre_usuario, rol: user.nombre_rol}
+            user: {
+                id: user.id_usuario, 
+                nombre: user.nombre_usuario, 
+                rol: user.nombre_rol
+            }
         });
 
     } catch (error) {
+        console.error(error);
         res.status(500).send("Error en el servidor");
     }
 };
