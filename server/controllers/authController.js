@@ -8,8 +8,9 @@ exports.login = async (req, res) => {
 
     try {
         const [rows] = await db.query(
-            `SELECT u.*, r.nombre_rol FROM usuario u
+            `SELECT u.*, r.nombre_rol, p.nombres FROM usuario u
             JOIN rol r ON u.rol_id_rol = r.id_rol
+            JOIN persona p ON u.id_usuario = p.id_persona
             WHERE u.nombre_usuario = ?`, [nombre_usuario]
         );
 
@@ -41,8 +42,9 @@ exports.login = async (req, res) => {
         res.json({
             token,
             user: {
-                id: user.id_usuario, 
-                nombre: user.nombre_usuario, 
+                id: user.id_usuario,
+                nombre:user.nombre_usuario,
+                nombres: user.nombres,
                 rol: user.nombre_rol
             }
         });
@@ -50,5 +52,24 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send("Error en el servidor");
+    }
+};
+
+exports.verificarToken = async (req, res) => {
+    try {
+        // Buscamos al usuario usando el ID que el middleware extrajo del token
+        const [rows] = await db.query(
+            `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, p.nombres 
+            FROM usuario u
+            JOIN persona p ON u.id_usuario = p.id_persona
+            WHERE u.id_usuario = ?`, [req.usuario.id]
+        );
+
+        if (rows.length === 0) return res.status(404).json({ msg: "Usuario no encontrado" });
+
+        res.json({ usuario: rows[0] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Error al verificar token" });
     }
 };

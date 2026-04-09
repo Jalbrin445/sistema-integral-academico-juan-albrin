@@ -1,18 +1,75 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useContext } from 'react';
+import { AuthContext } from './context/AuthContext';
+
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login/Login';
+import MenuPrincipal from './pages/MenuPrincipal/MenuPrincipal';
+import MainLayout from './components/MainLayout';
 import './App.css'
+// import GestionUsuarios from './pages/Admin/GestionUsuarios';
+// import MisNotas from './pages/Estudiante/MisNotas';
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return (
+      <div className='loading-screen'>
+        <div className='spinner'></div>
+        <p>Cargando ...</p>
+      </div>
+  )};
 
   return (
-    <div>
-      <h1>Bienvenido al Sistema Académico</h1>
-      <p>El frontend está listo para conectarse al backend</p>
-    </div>
-  )
+    <Routes>
+      
+      <Route path="/login" element={<Login />} />
+
+      <Route 
+        path="/MenuPrincipal" 
+        element={
+          <MainLayout>
+            <MenuPrincipal />
+          </MainLayout>
+        }
+      >
+        
+        <Route 
+          index 
+          element={
+            <div className='main-content'>
+              <header className="bienvenida-header">
+                <h1>Bienvenido, {user?.nombres || 'Usuario'}</h1>
+              </header>
+              <section className='texto-informativo'>
+                <p>Selecciona una opción a la izquierda para gestionar el sistema.</p>
+              </section>
+              <section className='redes-sociales' style={{ marginTop: '30px'}}>
+                <h3>Redes Sociales Institucionales</h3>
+                <div className="iconos-redes">
+                  <span className='circulo-icono'>F</span>
+                  <span className='circulo-icono'>X</span>
+                  <span className='circulo-icono'>I</span>
+                </div>
+                <p style={{fontSize: '0.8rem', color: '#666', marginTop: '10px'}}>
+                  Conéctacte con la comunidad Educativa.
+                </p>
+              </section>
+            </ div>
+          } 
+        />
+
+        {/* <Route path="admin/usuarios" element={<GestionUsuarios />} /> */}
+        {/* <Route path="estudiante/notas" element={<MisNotas />} /> */}
+        
+      </Route>
+
+      {/* 5. Redirecciones de seguridad */}
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
