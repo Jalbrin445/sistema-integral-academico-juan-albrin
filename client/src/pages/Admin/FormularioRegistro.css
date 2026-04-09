@@ -1,0 +1,48 @@
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+    background: linear-gradient(45deg, #1e3c72, #2a5298);
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+    border-color: #1e3c72;
+}
+
+label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.btn-success {
+    background: #28a745;
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: transform 0.2s;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    background: #218838;
+}
+
+h5.text-muted {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 20px;
+}

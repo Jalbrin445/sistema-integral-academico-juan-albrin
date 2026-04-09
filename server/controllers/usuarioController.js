@@ -53,12 +53,15 @@ exports.cambiarEstadoUsuario = async (req, res) => {
 
     const { id_usuario } = req.params;
     const { activo } = req.body;
+    const connection = await db.getConnection();
 
     if (activo !== 0 && activo !== 1) {
         return res.status(400).json({ msg: "El estado debe ser 0 (inactivo) o 1 (activo)" });
     }
 
     try {
+        await connection.beginTransaction();
+
         const idAdminLogueado = req.usuario.id || req.usuario.id_usuario;
 
         if (parseInt(id_usuario) === idAdminLogueado && activo === 0) {
@@ -67,27 +70,42 @@ exports.cambiarEstadoUsuario = async (req, res) => {
             });
         }
 
-        const [resultado] = await db.query(
+        const [resultado] = await connection.query(
             "UPDATE usuario SET activo = ? WHERE id_usuario = ?",
             [activo, id_usuario]
         );
 
         if (resultado.affectedRows === 0) {
-            return res.status(404).json({
-                msg:"Usuario no encontrado"
-            });
+            return res.status(404).json({ msg: "Usuario no encontrado"});
         }
 
-        const mensaje = activo === 1 ? "activado": "desactivado (dado de baja)";
+        const estadoTexto = activo === 1 ? 'activo' : 'inactivo';
+
+        await connection.query(
+            "UPDATE estudiante SET estado = ? WHERE usuario_id_usuario = ?",
+            [estadoTexto, id_usuario]
+        );
+
+        await connection.query(
+            "UPDATE docente SET estado = ? WHERE usuario_id_usuario = ?",
+            [estadoTexto, id_usuario]
+        );
+        
+        await connection.commit();
+
         res.json({
-            msg:`El usuario con ID ${id_usuario} ha sido ${mensaje} correctamente.`
+            msg:`El usuario con ID ${id_usuario} ha sido ${estadoTexto} correctamente.`
         });
 
     } catch (error) {
+        await connection.rollback();
+        console.error(error);
         res.status(500).json({
             msg: "Error al cambiar estado",
             error: error.message
         })
+    } finally {
+        connection.release();
     }
 };
 
@@ -104,22 +122,22 @@ exports.listarUsuariosPorRol = async (req, res) => {
             SELECT
             u.id_usuario, u.nombre_usuario, u.correo_electronico, u.activo,
             p.nombres, p.apellido_paterno, p.apellido_materno,
-            e.codigo_estudiante, e.id_estudiante, g.nombre_grupo
+            e.codigo_estudiante, g.nombre_grupo
             FROM usuario u
-            JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
-            JOIN persona p ON e.persona_id_persona = p.id_persona
+            INNER JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
+            INNER JOIN persona p ON e.persona_id_persona = p.id_persona
             LEFT JOIN grupo g ON e.grupo_id_grupo = g.id_grupo
             WHERE u.rol_id_rol = 3
             `;
         } else if (parseInt(id_rol) === 2) {
             query = `
             SELECT 
-            u.id_usuario, u.nombre_usuario, u.correo_electronico, u.activo 
+            u.id_usuario, u.nombre_usuario, u.correo_electronico, u.activo, 
             p.nombres, p.apellido_paterno, p.apellido_materno,
             d.id_docente, d.especialidad, d.titulo_profesional
             FROM usuario u
-            JOIN docente d ON u.id_usuario = d.usuario_id_usuario
-            JOIN persona p ON d.persona_id_persona = p.id_persona
+            INNER JOIN docente d ON u.id_usuario = d.usuario_id_usuario
+            INNER JOIN persona p ON d.persona_id_persona = p.id_persona
             WHERE u.rol_id_rol = 2
             `;
         } else {

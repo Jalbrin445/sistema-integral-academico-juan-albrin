@@ -1,0 +1,114 @@
+.gestion-usuarios-page {
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.gestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+}
+
+.tab-container {
+    display: flex;
+    gap: 10px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #f0f0f0;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.tabla-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.sia-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.sia-table th {
+    background: #f8f9fa;
+    padding: 15px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.sia-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
+}
+
+/* Badges de estado */
+.badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+}
+
+.bg-success { background-color: #28a745; }
+.bg-danger { background-color: #dc3545; }
+
+/* Botones de acción */
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+}
+
+.btn-disable { background: #ffebee; color: #c62828; }
+.btn-disable:hover { background: #ffcdd2; }
+
+.btn-enable { background: #e8f5e9; color: #2e7d32; }
+.btn-enable:hover { background: #c8e6c9; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-nuevo-usuario {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-nuevo-usuario:hover {
+    background-color: #218838;
+}

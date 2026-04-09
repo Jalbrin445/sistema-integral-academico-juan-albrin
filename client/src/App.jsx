@@ -1,14 +1,15 @@
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
-
 import { Routes, Route, Navigate } from 'react-router-dom';
+
+
 import Login from './pages/Login/Login';
 import MenuPrincipal from './pages/MenuPrincipal/MenuPrincipal';
 import MainLayout from './components/MainLayout';
-import './App.css'
-// import GestionUsuarios from './pages/Admin/GestionUsuarios';
+import GestionUsuarios from './pages/Admin/GestionUsuarios';
+import FormularioRegistro from './pages/Admin/FormularioRegistro';
 // import MisNotas from './pages/Estudiante/MisNotas';
-
+import './App.css'
 
 function App() {
   const { user, loading } = useContext(AuthContext);
@@ -60,8 +61,8 @@ function App() {
           } 
         />
 
-        {/* <Route path="admin/usuarios" element={<GestionUsuarios />} /> */}
-        {/* <Route path="estudiante/notas" element={<MisNotas />} /> */}
+        <Route path="admin/usuarios" element={<GestionUsuarios />} />
+        <Route path="admin/usuarios/nuevo" element={<FormularioRegistro />} />
         
       </Route>
 

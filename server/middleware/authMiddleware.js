@@ -10,7 +10,10 @@ const verificarAdmin = (req, res, next) => {
     try {
         const cifrado = jwt.verify(token, process.env.JWT_SECRET);
 
-        req.usuario = cifrado;
+        req.usuario = {
+            id: cifrado.id,
+            rol_id_rol: cifrado.rol || cifrado.rol_id_rol
+        };
         next();
 
     } catch (error) {
