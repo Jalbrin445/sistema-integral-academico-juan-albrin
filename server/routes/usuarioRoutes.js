@@ -7,5 +7,8 @@ router.post('/registro', verificarAdmin, usuarioController.registrarUsuarioGener
 router.patch('/estado/:id_usuario', verificarAdmin, esAdmin, usuarioController.cambiarEstadoUsuario);
 router.get('/listar-rol/:id_rol', verificarAdmin, esAdmin, usuarioController.listarUsuariosPorRol);
 router.get('/grupo/:id_grupo/estudiantes', verificarAdmin, esDocente, usuarioController.listarEstudiantesPorGrupo);
+router.put('/actualizar/:id_usuario', verificarAdmin, usuarioController.actualizarUsuarioGeneral);
+router.get('/:id_usuario', verificarAdmin, usuarioController.obtenerUsuarioPorId);
+
 
 module.exports = router;

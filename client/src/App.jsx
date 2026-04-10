@@ -63,7 +63,7 @@ function App() {
 
         <Route path="admin/usuarios" element={<GestionUsuarios />} />
         <Route path="admin/usuarios/nuevo" element={<FormularioRegistro />} />
-        
+        <Route path="admin/usuarios/editar/:id" element={<FormularioRegistro />} />
       </Route>
 
       {/* 5. Redirecciones de seguridad */}

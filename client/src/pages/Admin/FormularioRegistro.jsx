@@ -116,6 +116,28 @@ const FormularioRegistro = () => {
                                 <label className="form-label">Apellido Materno</label>
                                 <input type="text" className="form-control" name="apellido_materno" required onChange={handleChange} />
                             </div>
+                            <div className="col-md-4 mb-3">
+                                <label className="form-label">Fecha de Nacimiento</label>
+                                <input 
+                                        type="date" 
+                                        className="form-control" 
+                                        name="fecha_nacimiento" 
+                                        required // Hazlo obligatorio para evitar el error
+                                        onChange={handleChange} 
+                                    />
+                            </div>
+
+                            <div className="col-md-4 mb-3">
+                                <label className="form-label">Teléfono</label>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    name="telefono" 
+                                    placeholder="Ej: 3101234567"
+                                    required // <--- Esto evita que el valor sea enviado vacío
+                                    onChange={handleChange} 
+                                />
+                            </div>
 
                             <h5 className="text-muted border-bottom mt-4 pb-2 mb-3">Configuración de Cuenta</h5>
                             
@@ -126,6 +148,16 @@ const FormularioRegistro = () => {
                                     <option value="2">Docente</option>
                                     <option value="3">Estudiante</option>
                                 </select>
+                            </div>
+                            <div className="col-md-4 mb-3">
+                                <label className="form-label">Correo Electrónico</label>
+                                    <input 
+                                        type="email" 
+                                        className="form-control" 
+                                        name="correo_electronico" 
+                                        required // <--- Esto obliga al Admin a pedir el correo
+                                        onChange={handleChange} 
+                                    />
                             </div>
 
                             <div className="col-md-4 mb-3">

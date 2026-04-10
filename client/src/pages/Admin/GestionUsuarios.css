@@ -112,3 +112,18 @@
 .btn-nuevo-usuario:hover {
     background-color: #218838;
 }
+
+.acciones-celda {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-edit:hover {
+    background-color: #e0a800;
+}

@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (nombre_usuario, contrasena) => {
-
         try {
             const resp = await siaApi.post('/auth/login', { nombre_usuario, contrasena });
             const { token, user: usuarioBackend } = resp.data;
@@ -58,8 +57,7 @@ export const AuthProvider = ({ children }) => {
             }, 100);
 
         } catch (error) {
-            const mensaje = error.response?.data?.msg || 'Error al iniciar sesión';
-            throw mensaje;
+            throw error; 
         }
     };
     

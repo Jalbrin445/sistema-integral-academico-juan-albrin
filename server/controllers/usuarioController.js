@@ -5,7 +5,7 @@ exports.registrarUsuarioGeneral = async (req, res) => {
     const connection = await db.getConnection();
 
     const {
-        tipo_identificacion, numero_identificacion,nombres, apellido_paterno, apellido_materno,
+        tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno,
         fecha_nacimiento, genero, telefono, correo_electronico, direccion,
         nombre_usuario, contrasena, rol_id,
         codigo_estudiante, grupo_id,
@@ -15,35 +15,71 @@ exports.registrarUsuarioGeneral = async (req, res) => {
     try {
         await connection.beginTransaction();
 
+        // 1. LIMPIEZA DE DATOS (Para evitar errores de MySQL DATE y UNIQUE)
+        const f_nac = fecha_nacimiento || null;
+        const mail = correo_electronico || null;
+        const tel = telefono || null;
+
+        // 2. INSERTAR EN TABLA PERSONA
         const [personaRes] = await connection.query(
             `INSERT INTO persona (tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion]
+            [tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno, f_nac, genero, tel, mail, direccion]
         );
         const id_persona = personaRes.insertId;
 
+        // 3. HASHEAR CONTRASEÑA
         const salt = await bcrypt.genSalt(10);
         const hashPass = await bcrypt.hash(contrasena, salt);
 
+        // 4. INSERTAR EN TABLA USUARIO
         const [usuarioRes] = await connection.query(
             `INSERT INTO usuario (rol_id_rol, nombre_usuario, contrasena, correo_electronico, telefono)
             VALUES (?, ?, ?, ?, ?)`,
-            [rol_id, nombre_usuario, hashPass, correo_electronico, telefono]
-        );  
+            [rol_id, nombre_usuario, hashPass, mail, tel]
+        ); 
+        const id_usuario = usuarioRes.insertId;
 
-        const id_usuario = usuarioRes.insertId
+        // 5. INSERTAR EN TABLA ESPECÍFICA (ESTUDIANTE O DOCENTE)
+        const fechaIngreso = new Date().toISOString().slice(0, 10); // Fecha actual YYYY-MM-DD
+
+        if (rol_id === '3') { // Estudiante
+            // Ajustado a tus columnas: persona_id_persona, usuario_id_usuario, grupo_id_grupo
+            await connection.query(
+                `INSERT INTO estudiante (codigo_estudiante, fecha_ingreso, estado, usuario_id_usuario, persona_id_persona, grupo_id_grupo) 
+                VALUES (?, ?, 'activo', ?, ?, ?)`,
+                [codigo_estudiante, fechaIngreso, id_usuario, id_persona, grupo_id]
+            );
+        } else if (rol_id === '2') { // Docente
+            // Ajustado a tus columnas: persona_id_persona, usuario_id_usuario
+            const codDocente = `DOC-${numero_identificacion.slice(-4)}`; // Generar código simple
+            await connection.query(
+                `INSERT INTO docente (codigo_docente, titulo_profesional, especialidad, fecha_ingreso, estado, persona_id_persona, usuario_id_usuario) 
+                VALUES (?, ?, ?, ?, 'activo', ?, ?)`,
+                [codDocente, titulo_profesional, especialidad, fechaIngreso, id_persona, id_usuario]
+            );
+        }
+        
         await connection.commit();
-        res.status(201).json({ msg: "Registro exitoso: Persona y Usuario Creados.",
-            detalles: {
-                id_persona,
-                id_usuario
-            }
+        res.status(201).json({ 
+            msg: "Usuario registrado completamente en SIA.",
+            detalles: { id_persona, id_usuario }
         });
         
     } catch (error) {
         await connection.rollback();
-        console.error(error);
-        res.status(500).json({ msg: "Error al registrar", error:error.message });
+        console.error("Error detallado:", error);
+        
+        // Manejo de errores comunes de MySQL
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ msg: "El documento, usuario o correo ya existen." });
+        }
+
+        res.status(500).json({ 
+            msg: "Error al registrar en la base de datos", 
+            error: error.message,
+            sqlMessage: error.sqlMessage 
+        });
     } finally {
         connection.release();
     }
@@ -191,5 +227,96 @@ exports.listarEstudiantesPorGrupo = async (req, res) => {
             msg:"Error al obtener estudiantes", 
             error: error.message
         });
+    }
+};
+
+
+exports.actualizarUsuarioGeneral = async (req, res) => {
+    const connection = await db.getConnection();
+    const { id_usuario } = req.params; 
+    const {
+        // Datos Persona
+        nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion,
+        // Datos Rol
+        codigo_estudiante, grupo_id_grupo,
+        especialidad, titulo_profesional
+    } = req.body;
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Verificar existencia y obtener datos base
+        const [userRow] = await connection.query(
+            'SELECT persona_id_persona, rol_id_rol FROM usuario WHERE id_usuario = ?', 
+            [id_usuario]
+        );
+        
+        if (userRow.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ msg: "Usuario no encontrado" });
+        }
+
+        const { persona_id_persona, rol_id_rol } = userRow[0];
+
+        // 2. Actualizar Tabla Persona
+        await connection.query(
+            `UPDATE persona SET 
+                nombres = ?, apellido_paterno = ?, apellido_materno = ?, 
+                fecha_nacimiento = ?, genero = ?, telefono = ?, 
+                correo_electronico = ?, direccion = ? 
+            WHERE id_persona = ?`,
+            [nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion, persona_id_persona]
+        );
+
+        // 3. Actualizar Tabla Usuario (Sincronizar contacto)
+        await connection.query(
+            `UPDATE usuario SET correo_electronico = ?, telefono = ? WHERE id_usuario = ?`,
+            [correo_electronico, telefono, id_usuario]
+        );
+
+        // 4. Actualizar según el Rol
+        if (parseInt(rol_id_rol) === 3) { // Estudiante
+            await connection.query(
+                `UPDATE estudiante SET codigo_estudiante = ?, grupo_id_grupo = ? WHERE usuario_id_usuario = ?`,
+                [codigo_estudiante, grupo_id_grupo, id_usuario]
+            );
+        } else if (parseInt(rol_id_rol) === 2) { // Docente
+            await connection.query(
+                `UPDATE docente SET especialidad = ?, titulo_profesional = ? WHERE usuario_id_usuario = ?`,
+                [especialidad, titulo_profesional, id_usuario]
+            );
+        }
+
+        await connection.commit();
+        res.json({ msg: "Perfil actualizado correctamente" });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al actualizar:", error);
+        res.status(500).json({ msg: "Error interno al actualizar datos", error: error.message });
+    } finally {
+        connection.release();
+    }
+};
+
+exports.obtenerUsuarioPorId = async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        const query = `
+            SELECT u.*, p.*, e.codigo_estudiante, e.grupo_id_grupo, d.especialidad, d.titulo_profesional
+            FROM usuario u
+            INNER JOIN persona p ON u.persona_id_persona = p.id_persona
+            LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
+            LEFT JOIN docente d ON u.id_usuario = d.usuario_id_usuario
+            WHERE u.id_usuario = ?
+        `;
+        const [rows] = await db.query(query, [id_usuario]);
+
+        if (rows.length === 0) return res.status(404).json({ msg: "Usuario no encontrado" });
+
+        res.json(rows[0]);
+    } catch (error) {
+        res.status(500).json({ msg: "Error al obtener datos", error: error.message });
     }
 };
