@@ -235,9 +235,7 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
     const connection = await db.getConnection();
     const { id_usuario } = req.params; 
     const {
-        // Datos Persona
         nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion,
-        // Datos Rol
         codigo_estudiante, grupo_id_grupo,
         especialidad, titulo_profesional
     } = req.body;
@@ -245,18 +243,27 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        // 1. Verificar existencia y obtener datos base
-        const [userRow] = await connection.query(
-            'SELECT persona_id_persona, rol_id_rol FROM usuario WHERE id_usuario = ?', 
+        // 1. Obtener el rol y el persona_id_persona buscando en las tablas de roles
+        // Intentamos buscar en estudiante
+        let [vinculo] = await connection.query(
+            'SELECT persona_id_persona, 3 as rol FROM estudiante WHERE usuario_id_usuario = ?', 
             [id_usuario]
         );
-        
-        if (userRow.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ msg: "Usuario no encontrado" });
+
+        // Si no es estudiante, buscamos en docente
+        if (vinculo.length === 0) {
+            [vinculo] = await connection.query(
+                'SELECT persona_id_persona, 2 as rol FROM docente WHERE usuario_id_usuario = ?', 
+                [id_usuario]
+            );
         }
 
-        const { persona_id_persona, rol_id_rol } = userRow[0];
+        if (vinculo.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ msg: "No se encontró el vínculo de persona para este usuario" });
+        }
+
+        const { persona_id_persona, rol } = vinculo[0];
 
         // 2. Actualizar Tabla Persona
         await connection.query(
@@ -274,13 +281,13 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
             [correo_electronico, telefono, id_usuario]
         );
 
-        // 4. Actualizar según el Rol
-        if (parseInt(rol_id_rol) === 3) { // Estudiante
+        // 4. Actualizar datos específicos del Rol
+        if (rol === 3) {
             await connection.query(
                 `UPDATE estudiante SET codigo_estudiante = ?, grupo_id_grupo = ? WHERE usuario_id_usuario = ?`,
                 [codigo_estudiante, grupo_id_grupo, id_usuario]
             );
-        } else if (parseInt(rol_id_rol) === 2) { // Docente
+        } else if (rol === 2) {
             await connection.query(
                 `UPDATE docente SET especialidad = ?, titulo_profesional = ? WHERE usuario_id_usuario = ?`,
                 [especialidad, titulo_profesional, id_usuario]
@@ -288,7 +295,7 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
         }
 
         await connection.commit();
-        res.json({ msg: "Perfil actualizado correctamente" });
+        res.json({ msg: "Perfil actualizado correctamente en SIA" });
 
     } catch (error) {
         await connection.rollback();
@@ -303,12 +310,18 @@ exports.obtenerUsuarioPorId = async (req, res) => {
     const { id_usuario } = req.params;
 
     try {
+        // Query corregida: Ya que usuario no tiene persona_id_persona,
+        // entramos por las tablas estudiante/docente para llegar a persona.
         const query = `
-            SELECT u.*, p.*, e.codigo_estudiante, e.grupo_id_grupo, d.especialidad, d.titulo_profesional
+            SELECT 
+                u.id_usuario, u.nombre_usuario, u.correo_electronico, u.rol_id_rol, u.activo,
+                p.*, 
+                e.codigo_estudiante, e.grupo_id_grupo, 
+                d.especialidad, d.titulo_profesional
             FROM usuario u
-            INNER JOIN persona p ON u.persona_id_persona = p.id_persona
             LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
             LEFT JOIN docente d ON u.id_usuario = d.usuario_id_usuario
+            LEFT JOIN persona p ON (e.persona_id_persona = p.id_persona OR d.persona_id_persona = p.id_persona)
             WHERE u.id_usuario = ?
         `;
         const [rows] = await db.query(query, [id_usuario]);
@@ -317,6 +330,7 @@ exports.obtenerUsuarioPorId = async (req, res) => {
 
         res.json(rows[0]);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ msg: "Error al obtener datos", error: error.message });
     }
 };

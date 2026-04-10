@@ -8,6 +8,9 @@ import MenuPrincipal from './pages/MenuPrincipal/MenuPrincipal';
 import MainLayout from './components/MainLayout';
 import GestionUsuarios from './pages/Admin/GestionUsuarios';
 import FormularioRegistro from './pages/Admin/FormularioRegistro';
+import GestionGrupos from './pages/Admin/GestionGrupos';
+import GestionMaterias from './pages/Admin/GestionMaterias';
+import AsignacionAcademica from './pages/Admin/AsignacionAcademica';  
 // import MisNotas from './pages/Estudiante/MisNotas';
 import './App.css'
 
@@ -63,7 +66,10 @@ function App() {
 
         <Route path="admin/usuarios" element={<GestionUsuarios />} />
         <Route path="admin/usuarios/nuevo" element={<FormularioRegistro />} />
-        <Route path="admin/usuarios/editar/:id" element={<FormularioRegistro />} />
+        <Route path="admin/usuarios/editar/:id_usuario" element={<FormularioRegistro />} />
+        <Route path="admin/grupos" element={<GestionGrupos />} />
+        <Route path="admin/materias" element={<GestionMaterias />} />
+        <Route path="admin/asignacion" element={<AsignacionAcademica />} />
       </Route>
 
       {/* 5. Redirecciones de seguridad */}

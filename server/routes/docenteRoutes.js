@@ -5,6 +5,7 @@ const notaController = require('../controllers/notaController');
 const { verificarAdmin, esAdmin, esDocente } = require('../middleware/authMiddleware');
 
 router.post('/registrar', verificarAdmin, esAdmin, docenteController.registrarDocente);
+router.get('/', verificarAdmin, docenteController.obtenerDocentes);
 router.post('/criterios/crear', verificarAdmin, esDocente, notaController.crearCriterioEvaluacion);
 
 

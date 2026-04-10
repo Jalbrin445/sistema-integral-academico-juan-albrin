@@ -13,6 +13,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/estudiantes', require('./routes/estudianteRoutes'));
 app.use('/api/grupos', require('./routes/grupoRoutes'));
+app.use('/api/grados', require('./routes/gradoRoutes'));
 app.use('/api/docentes', require('./routes/docenteRoutes'));
 app.use('/api/materias', require('./routes/materiaRoutes'));
 app.use('/api/asignaciones', require('./routes/asignacionRoutes'));

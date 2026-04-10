@@ -1,0 +1,33 @@
+.asignacion-container {
+    background-color: #f0f2f5;
+    min-height: 100vh;
+}
+
+.asignacion-container h2 {
+    color: #1a202c;
+    font-weight: 800;
+}
+
+.card {
+    border-radius: 20px;
+}
+
+.form-select, .form-control {
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-success {
+    background-color: #38a169;
+    border: none;
+    padding: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.btn-success:hover {
+    background-color: #2f855a;
+    transform: translateY(-2px);
+}

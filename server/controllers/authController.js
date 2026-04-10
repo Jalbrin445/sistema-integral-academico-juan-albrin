@@ -71,7 +71,7 @@ exports.verificarToken = async (req, res) => {
         const [rows] = await db.query(
             `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, p.nombres 
             FROM usuario u
-            JOIN persona p ON u.persona_id_persona = p.id_persona
+            JOIN persona p ON u.id_usuario = p.id_persona -- Ajustado igual que el login
             WHERE u.id_usuario = ?`, [req.usuario.id]
         );
 

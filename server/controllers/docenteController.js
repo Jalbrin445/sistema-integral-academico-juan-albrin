@@ -53,3 +53,22 @@ exports.registrarDocente = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
+exports.obtenerDocentes = async (req, res) => {
+    try {
+        
+        const [rows] = await db.query(
+            `SELECT d.id_docente, p.nombres, p.apellido_paterno, p.apellido_materno, d.especialidad
+            FROM docente d
+            JOIN persona p ON d.persona_id_persona = p.id_persona
+            WHERE d.estado = 'activo'` 
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener docentes:", error);
+        res.status(500).json({ 
+            msg: "Error al obtener la lista de docentes", 
+            error: error.message 
+        });
+    }
+};
