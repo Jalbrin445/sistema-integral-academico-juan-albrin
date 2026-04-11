@@ -1,0 +1,147 @@
+/* --- CONTENEDOR PRINCIPAL Y ANIMACIÓN --- */
+.estudiante-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.estudiante-container h2 {
+    color: #2c3e50;
+    font-weight: 600;
+    border-bottom: 3px solid #3498db;
+    display: inline-block;
+    padding-bottom: 8px;
+    margin-bottom: 25px;
+}
+
+/* --- TARJETAS (CARDS) - LIMPIEZA TOTAL --- */
+.card {
+    border: none !important; /* Fuerza la eliminación del borde de la tarjeta */
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    padding: 12px 20px;
+    border: none !important; /* Quita la línea azul/gris bajo el título */
+}
+
+/* --- TABLAS (ELIMINACIÓN RADICAL DE LÍNEAS AZULES) --- */
+.card .table, 
+.contenedor-planilla .table,
+.table-responsive,
+.table {
+    border: none !important;
+    border-width: 0 !important;
+    margin-bottom: 0;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Quitamos los bordes de cada celda individualmente */
+.table td, .table th, .table tr {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    /* Solo dejamos una línea inferior muy sutil para separar filas */
+    border-bottom: 1px solid #f0f0f0 !important; 
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+/* Estilo para el encabezado de la tabla */
+.table thead th {
+    background-color: #f8f9fa;
+    color: #555;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    border-bottom: 2px solid #eee !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f7ff;
+    cursor: default;
+}
+
+/* --- BADGES DE NOTAS --- */
+.badge {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    min-width: 45px;
+}
+
+.bg-success {
+    background-color: #27ae60 !important;
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+}
+
+.bg-danger {
+    background-color: #e74c3c !important;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+}
+
+/* --- BOTONES Y SELECTS (QUITAR FOCUS/REMARCADO) --- */
+.btn-outline-primary {
+    border-color: #3498db;
+    color: #3498db;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3498db;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Quita el resplandor azul al hacer clic en cualquier cosa */
+.btn:focus, .btn:active, .form-select:focus, .input-nota-docente:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* --- PANEL DE DETALLE (LISTAS) --- */
+.list-group-item {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid #eee !important;
+    padding: 15px 20px;
+}
+
+.list-group-item:first-child {
+    border-top: none !important;
+}
+
+.list-group-item:last-child {
+    border-bottom: none !important;
+}
+
+.list-group-item strong {
+    color: #34495e;
+    display: block;
+}
+
+.list-group-item span.fw-bold {
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .col-md-5 {
+        margin-top: 20px;
+    }
+}

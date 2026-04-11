@@ -51,3 +51,40 @@ exports.matricularEstudiante = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
+exports.listarEstudiantesPorGrupo = async (req, res) => {
+    const { id_grupo } = req.params;
+
+    try {
+        const [estudiantes] = await db.query(
+            `SELECT
+            e.id_estudiante,
+            e.codigo_estudiante,
+            p.nombres,
+            p.apellido_paterno,
+            p.apellido_materno,
+            u.activo
+            FROM estudiante e
+            JOIN persona p ON e.persona_id_persona = p.id_persona
+            JOIN usuario u ON e.usuario_id_usuario = u.id_usuario
+            WHERE e.grupo_id_grupo = ? AND u.activo = 1
+            ORDER BY p.apellido_paterno ASC
+            `,
+            [id_grupo]
+        );
+
+        if (estudiantes.length === 0) {
+            return res.status(404).json({
+                msg: "No se encontraron estudiantes activos en este grupo."
+            });
+        }
+
+        res.json(estudiantes);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            msg:"Error al obtener estudiantes", 
+            error: error.message
+        });
+    }
+};

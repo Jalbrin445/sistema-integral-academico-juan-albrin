@@ -8,14 +8,14 @@ export const MENU_OPCIONES = {
         { label: 'Reportes', path: 'admin/reportes' }
     ],
     2: [
-        { label: 'Carga Académica', path:'docente/carga'},
-        { label: 'Registrar Calificaciones', path: 'docente/notas' },
-        { label: 'Reportar Incapacidad', path: 'docente/incapacidad' },
-        { label: 'Mis Estudiantes', path: 'docente/estudiantes'}
+        { label: 'Carga Académica', path:'/MenuPrincipal/docente/carga'},
+        { label: 'Registrar Calificaciones', path: '/MenuPrincipal/docente/notas' },
+        { label: 'Reportar Incapacidad', path: '/MenuPrincipal/docente/incapacidad' },
+        { label: 'Gestionar Criterios', path: '/MenuPrincipal/docente/criterios'}
     ],
     3: [ 
-        { label: 'Notas Académicas', path: 'estudiante/notas' },
-        { label: 'Historial Académico', path: 'estudiante/historial' },
-        { label: 'Información Institucional', path: 'estudiante/info' }
+        { label: 'Notas Académicas', path: '/MenuPrincipal/estudiante/notas' },
+        { label: 'Historial Académico', path: '/MenuPrincipal/estudiante/historial' },
+        { label: 'Información Institucional', path: '/MenuPrincipal/estudiante/info' }
     ]
 };

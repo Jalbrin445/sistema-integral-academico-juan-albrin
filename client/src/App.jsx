@@ -11,7 +11,10 @@ import FormularioRegistro from './pages/Admin/FormularioRegistro';
 import GestionGrupos from './pages/Admin/GestionGrupos';
 import GestionMaterias from './pages/Admin/GestionMaterias';
 import AsignacionAcademica from './pages/Admin/AsignacionAcademica';  
-// import MisNotas from './pages/Estudiante/MisNotas';
+import CargaAcademica from './pages/Docente/CargaAcademica';
+import RegistrarNotas from './pages/Docente/RegistrarNotas';
+import ConfigurarCriterio from './pages/Docente/ConfigurarCriterios';
+import MisNotas from './pages/Estudiante/MisNotas';
 import './App.css'
 
 function App() {
@@ -32,10 +35,11 @@ function App() {
 
       <Route 
         path="/MenuPrincipal" 
-        element={
+        element={ user ? (
           <MainLayout>
             <MenuPrincipal />
           </MainLayout>
+          ) : ( <Navigate to="/login"/>)
         }
       >
         
@@ -70,11 +74,17 @@ function App() {
         <Route path="admin/grupos" element={<GestionGrupos />} />
         <Route path="admin/materias" element={<GestionMaterias />} />
         <Route path="admin/asignacion" element={<AsignacionAcademica />} />
+      
+        <Route path="docente/carga" element={<CargaAcademica />} />
+        <Route path="docente/notas" element={<RegistrarNotas />} />
+        <Route path="docente/criterios/:idAsignacion/:nombreMateria" element={<ConfigurarCriterio/>} />
+      
+        <Route path="estudiante/notas" element={<MisNotas />} />
       </Route>
-
+          
+      <Route path="/" element={user ? <Navigate to="/MenuPrincipal"/> : <Navigate to="/login"/>}/>
       {/* 5. Redirecciones de seguridad */}
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to={ user ? "/MenuPrincipal" : "/login"} />} />
     </Routes>
   );
 }

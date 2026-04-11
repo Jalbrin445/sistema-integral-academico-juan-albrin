@@ -39,7 +39,7 @@ exports.obtenerCargaDocente = async (req, res) => {
     const { id_docente } = req.params;
     try {
         const [carga] = await db.query(
-        `SELECT a.id_asignacion, m.nombre_materia, g.nombre_grupo, a.anio_escolar
+        `SELECT a.id_asignacion, m.nombre_materia, a.grupo_id_grupo, g.nombre_grupo, a.anio_escolar
         FROM asignacion_materia a
         JOIN materia m ON a.materia_id_materia = m.id_materia
         JOIN grupo g ON a.grupo_id_grupo = g.id_grupo

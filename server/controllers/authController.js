@@ -9,10 +9,12 @@ exports.login = async (req, res) => {
         // 1. Buscamos al usuario y sus datos relacionados
         // Corregido el JOIN: usamos persona_id_persona que es la FK en la tabla usuario
         const [rows] = await db.query(
-            `SELECT u.*, r.nombre_rol, p.nombres 
+            `SELECT u.*, r.nombre_rol, p.nombres,
+                    d.id_docente
             FROM usuario u
             JOIN rol r ON u.rol_id_rol = r.id_rol
-            JOIN persona p ON u.id_usuario = p.id_persona -- Volvemos a la relación original
+            JOIN persona p ON u.id_usuario = p.id_persona
+            LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
             WHERE u.nombre_usuario = ?`, [nombre_usuario]
         );
 
@@ -53,9 +55,11 @@ exports.login = async (req, res) => {
             token,
             user: {
                 id: user.id_usuario,
+                id_docente: user.id_docente,
                 nombre: user.nombre_usuario,
                 nombres: user.nombres,
-                rol: user.nombre_rol
+                rol: user.nombre_rol,
+                rol_id_rol: user.rol_id_rol
             }
         });
 
@@ -67,17 +71,27 @@ exports.login = async (req, res) => {
 
 exports.verificarToken = async (req, res) => {
     try {
-        // También corregimos el JOIN aquí para mantener la consistencia
+        // Agregamos el JOIN con docente para no perder su ID al refrescar
         const [rows] = await db.query(
-            `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, p.nombres 
+            `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, p.nombres, d.id_docente 
             FROM usuario u
-            JOIN persona p ON u.id_usuario = p.id_persona -- Ajustado igual que el login
+            JOIN persona p ON u.id_usuario = p.id_persona
+            LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
             WHERE u.id_usuario = ?`, [req.usuario.id]
         );
 
         if (rows.length === 0) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-        res.json({ usuario: rows[0] });
+        // Devolvemos el usuario con la misma estructura que el Login
+        res.json({ 
+            user: {
+                id: rows[0].id_usuario,
+                id_docente: rows[0].id_docente,
+                nombre: rows[0].nombre_usuario,
+                nombres: rows[0].nombres,
+                rol_id_rol: rows[0].rol_id_rol
+            }
+        });
     } catch (error) {
         console.error("Error verificando token:", error);
         res.status(500).json({ msg: "Error al verificar token" });

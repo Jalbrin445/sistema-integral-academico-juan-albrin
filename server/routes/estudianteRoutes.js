@@ -10,6 +10,6 @@ console.log('3. matricularEstudiante:', typeof estudianteController.matricularEs
 console.log('---------------------------------------');
 
 router.post('/matricular', verificarAdmin, esAdmin, estudianteController.matricularEstudiante);
-
+router.get('/grupo/:id_grupo', verificarAdmin, estudianteController.listarEstudiantesPorGrupo);
 module.exports = router;
 

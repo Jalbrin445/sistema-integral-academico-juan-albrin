@@ -1,0 +1,140 @@
+/* --- Contenedor General del Módulo --- */
+.docente-seccion {
+    padding: 1.5rem;
+    background-color: #f8fafc;
+    border-radius: 12px;
+}
+
+/* --- 1. Estilos para CargaAcademica (Tarjetas) --- */
+.materia-card {
+    border: none;
+    border-radius: 16px;
+    background: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 5px solid #0d6efd; /* Color primario */
+}
+
+.materia-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.materia-card .card-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* --- 2. Estilos para ConfigurarCriterios --- */
+.card-config-criterios {
+    border: 1px dashed #cbd5e1;
+    background-color: #f1f5f9;
+    border-radius: 12px;
+}
+
+.criterio-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.porcentaje-badge {
+    background: #3b82f6;
+    color: white;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* --- 3. Estilos para RegistrarNotas (La Planilla) --- */
+.contenedor-planilla {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+.header-planilla {
+    background: #1e293b; /* Azul oscuro pizarra */
+    color: #ffffff;
+    padding: 15px 20px;
+}
+
+.tabla-notas {
+    margin-bottom: 0;
+}
+
+.tabla-notas thead th {
+    background: #f8fafc;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-top: none;
+    padding: 15px;
+}
+
+/* Input de la Nota */
+.input-nota-docente {
+    width: 85px;
+    height: 40px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    color: #0f172a;
+    transition: all 0.2s;
+}
+
+.input-nota-docente:focus {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Input de Observaciones */
+.input-obs-docente {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+/* --- Botones --- */
+.btn-docente-principal {
+    background: #10b981; /* Verde esmeralda */
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.btn-docente-principal:hover {
+    background: #059669;
+}
+
+.btn-docente-secundario {
+    background: #6366f1; /* Índigo */
+    border: none;
+    color: white;
+    border-radius: 8px;
+}
+
+/* --- Utilidades para el Usuario --- */
+.label-informativo {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    font-weight: 600;
+}

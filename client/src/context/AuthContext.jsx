@@ -12,9 +12,21 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
+    // Función para limpiar y normalizar los datos del usuario
+    const normalizarUsuario = (datos) => {
+        const usuarioBackend = Array.isArray(datos) ? datos[0] : datos;
+        if (!usuarioBackend) return null;
 
-    const verificarToken = async () => {
+        return {
+            ...usuarioBackend,
+            id: usuarioBackend.id_usuario || usuarioBackend.id_docente || usuarioBackend.docente_id_docente || usuarioBackend.id,
+            rol: usuarioBackend.rol_id_rol || usuarioBackend.rol || usuarioBackend.id_rol
+        };
+    };
+
+    useEffect(() => {
+        const verificarToken = async () => {
+            
             const token = localStorage.getItem('token');
             if (!token) {
                 setLoading(false);
@@ -23,19 +35,16 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 const resp = await siaApi.get('/auth/verify');
-                const usuarioBackend = resp.data.user || resp.data.usuario || resp.data;
-                const usuarioLimpio = Array.isArray(usuarioBackend) ? usuarioBackend[0] : usuarioBackend;
+                const datosRaw = resp.data.user;
+                const usuarioLimpio = normalizarUsuario(datosRaw);
 
-                if (usuarioLimpio) { 
-                    console.log("Usuario verificado:", usuarioLimpio);
+                if (usuarioLimpio) {
                     setUser(usuarioLimpio);
                     localStorage.setItem('user', JSON.stringify(usuarioLimpio));
                 }
-
             } catch (error) {
                 console.error("Token no válido o expirado");
                 logout();
-
             } finally {
                 setLoading(false);
             }
@@ -49,18 +58,20 @@ export const AuthProvider = ({ children }) => {
             const resp = await siaApi.post('/auth/login', { nombre_usuario, contrasena });
             const { token, user: usuarioBackend } = resp.data;
 
+            const usuarioLimpio = normalizarUsuario(usuarioBackend);
+
             localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(usuarioBackend));
-            setUser(usuarioBackend);
+            localStorage.setItem('user', JSON.stringify(usuarioLimpio));
+            setUser(usuarioLimpio);
+
             setTimeout(() => {
                 navigate('/MenuPrincipal');
             }, 100);
-
         } catch (error) {
-            throw error; 
+            throw error;
         }
     };
-    
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

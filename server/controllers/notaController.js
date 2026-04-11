@@ -118,37 +118,48 @@ exports.obtenerNotasEstudiante = async (req, res) => {
 
 exports.obtenerResumenMateriasEstudiante = async (req, res) => {
     const { id_estudiante } = req.params;
+    const { periodo } = req.query; 
 
     try {
-        const [materias] = await db.query(
-            `SELECT 
-            m.nombre_materia,
-            m.descripcion,
-            CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) AS nombre_docente, 
-            a.id_asignacion,
-            ROUND(IFNULL(SUM(c.nota * (ce.porcentaje / 100)), 0), 2) AS nota_parcial
+        // La lógica cambia: el filtro de periodo debe ir dentro del ON del LEFT JOIN 
+        // o en el WHERE afectando a la tabla de calificaciones.
+        let sql = `
+            SELECT 
+                m.nombre_materia,
+                m.descripcion,
+                CONCAT(p.nombres, ' ', p.apellido_paterno, ' ', p.apellido_materno) AS nombre_docente, 
+                a.id_asignacion,
+                ROUND(IFNULL(SUM(c.nota * (ce.porcentaje / 100)), 0), 2) AS nota_parcial
             FROM asignacion_materia a
             JOIN materia m ON a.materia_id_materia = m.id_materia
             JOIN docente d ON a.docente_id_docente = d.id_docente
             JOIN persona p ON d.persona_id_persona = p.id_persona 
             LEFT JOIN calificacion c ON c.asignacion_materia_id_asignacion = a.id_asignacion 
-            AND c.estudiante_id_estudiante = ?
+                AND c.estudiante_id_estudiante = ?
             LEFT JOIN criterio_evaluacion ce ON c.criterio_evaluacion_id_criterio = ce.id_criterio
-            GROUP BY a.id_asignacion`,
-            [id_estudiante]
-        );
+            WHERE 1=1`;
 
-        if (materias.length === 0) {
-            return res.status(200).json({ 
-                msg: "No se encontraron materias vinculadas a este estudiante." 
-            });
+        const params = [id_estudiante];
+
+        // Si hay periodo, filtramos por la columna que SÍ existe en la tabla calificacion (c)
+        if (periodo) {
+            sql += ` AND c.periodo_academico_id_periodo = ?`;
+            params.push(periodo);
         }
 
+        sql += ` GROUP BY a.id_asignacion`;
+
+        const [materias] = await db.query(sql, params);
+
+        // Si filtramos por periodo y no hay notas, la consulta podría devolver nota 0 o nada.
+        // Filtramos los resultados para que solo muestre materias que tengan relación con ese periodo
+        // si es que el usuario seleccionó uno.
         res.json(materias);
+
     } catch (error) {
         console.error("Error SQL:", error.message);
         res.status(500).json({ 
-            msg: "Error al obtener el resumen del estudiante", 
+            msg: "Error al obtener el resumen", 
             error: error.message 
         });
     }
@@ -251,3 +262,19 @@ exports.listarCriteriosPorAsignacion = async (req, res) => {
     }
 };
 
+exports.obtenerNotasPorCriterioYGrupo = async (req, res) => {
+    const { id_criterio, id_asignacion } = req.params;
+
+    try {
+        const [notas] = await db.query(
+            `SELECT id_calificacion, estudiante_id_estudiante, nota, observaciones 
+            FROM calificacion 
+            WHERE criterio_evaluacion_id_criterio = ? AND asignacion_materia_id_asignacion = ?`,
+            [id_criterio, id_asignacion]
+        );
+        // Enviamos las notas encontradas (puede ser un array vacío si es la primera vez)
+        res.json(notas);
+    } catch (error) {
+        res.status(500).json({ msg: "Error al obtener notas previas", error: error.message });
+    }
+};
