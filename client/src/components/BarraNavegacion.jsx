@@ -1,28 +1,29 @@
 import { useContext } from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-function BarraNavegacion(){
+function BarraNavegacion() {
+    const { logout, user } = useContext(AuthContext);
 
-    const {logout} = useContext(AuthContext);
     return (
         <nav className="navbar">
             <div className="navbar-logo">
-                <Link to="/MenuPrincipal">Mi App</Link>
+                <Link to="/MenuPrincipal">
+                    <span className="logo-icon">🎓</span>
+                    <span className="logo-text">INSTANDES</span>
+                </Link>
             </div>
             <ul className="navbar-links">
-                <li>
-                    <Link to="/MenuPrincipal">Inicio</Link>
-                </li>
-                <li>
-                    <Link to="/InformacionPersonal">Información Personal</Link>
-                </li>
-                <li>
-                    <button onClick={logout} className="btn-logout">Cerrar Sesión</button>
+                <li><Link to="/MenuPrincipal"><i className="bi bi-house-door"></i> Inicio</Link></li>
+                <li><Link to="/InformacionPersonal"><i className="bi bi-person-circle"></i> Mi Perfil</Link></li>
+                <li className="user-badge">
+                    
+                    <button onClick={logout} className="btn-logout-modern">
+                        <i className="bi bi-box-arrow-right"></i> Salir
+                    </button>
                 </li>
             </ul>
         </nav>
     );
 }
-
 export default BarraNavegacion;
