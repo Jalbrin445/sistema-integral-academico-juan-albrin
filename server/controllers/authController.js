@@ -41,7 +41,7 @@ exports.login = async (req, res) => {
         const token = jwt.sign(
             { id: user.id_usuario, rol: user.rol_id_rol },
             process.env.JWT_SECRET,
-            { expiresIn: '8h' }
+            { expiresIn: '2h' }
         );
 
         // 5. REGISTRO DE ÚLTIMO ACCESO
@@ -50,18 +50,25 @@ exports.login = async (req, res) => {
             [user.id_usuario]
         );
 
-        // 6. RESPUESTA EXITOSA
-        res.json({
-            token,
-            user: {
-                id: user.id_usuario,
+        res.cookie('token',token,{
+            httpOnly:true,
+            secure:process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 2 * 60 * 60 *1000
+        });
+        
+        return res.json({
+            mensaje: 'Login exitoso', 
+            user: 
+                {
+                id:user.id_usuario,
                 id_docente: user.id_docente,
                 nombre: user.nombre_usuario,
-                nombres: user.nombres,
-                rol: user.nombre_rol,
+                nombres:user.nombres,
+                rol:user.nombre_rol,
                 rol_id_rol: user.rol_id_rol
-            }
-        });
+             }
+            });
 
     } catch (error) {
         console.error("Error en Login:", error);
@@ -94,6 +101,22 @@ exports.verificarToken = async (req, res) => {
         });
     } catch (error) {
         console.error("Error verificando token:", error);
-        res.status(500).json({ msg: "Error al verificar token" });
+        res.status(500).json({ msg: "Error interno en el servidor" });
+    }
+};
+
+exports.logout = async (req, res) => {
+    try {
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite:'strict'
+        });
+        return res.json({msg:"Sesión cerrada exitosamente en el servidor"});
+    } catch (error) {
+        console.error("Error en Logout:", error);
+        res.status(500).json({
+            msg:"Error interno en el servidor"
+        })
     }
 };

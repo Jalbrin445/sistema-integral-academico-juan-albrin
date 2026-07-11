@@ -4,6 +4,6 @@ const periodoController = require('../controllers/periodoController');
 const { verificarAdmin } = require('../middleware/authMiddleware');
 
 
-router.get('/activos', verificarAdmin, periodoController.getPeriodosActivos);
+router.get('/activos', verificarAdmin, periodoController.obtenerPeriodosActivos);
 
 module.exports = router;

@@ -5,8 +5,9 @@ import siaApi from '../api/siaApi';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+    
     const [user, setUser] = useState(() => {
-        const savedUser = localStorage.getItem('user');
+        const savedUser = sessionStorage.getItem('user');
         return savedUser ? JSON.parse(savedUser) : null;
     });
     const [loading, setLoading] = useState(true);
@@ -25,13 +26,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        const verificarToken = async () => {
+        const verificarSessionActiva = async () => {
             
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
 
             try {
                 const resp = await siaApi.get('/auth/verify');
@@ -40,28 +36,29 @@ export const AuthProvider = ({ children }) => {
 
                 if (usuarioLimpio) {
                     setUser(usuarioLimpio);
-                    localStorage.setItem('user', JSON.stringify(usuarioLimpio));
+                    sessionStorage.setItem('user', JSON.stringify(usuarioLimpio));
+                } else {
+                    logout();
                 }
             } catch (error) {
-                console.error("Token no válido o expirado");
+                console.error("Sesión expirada o no válida en el servidor");
                 logout();
             } finally {
                 setLoading(false);
             }
         };
 
-        verificarToken();
+        verificarSessionActiva();
     }, []);
 
     const login = async (nombre_usuario, contrasena) => {
         try {
             const resp = await siaApi.post('/auth/login', { nombre_usuario, contrasena });
-            const { token, user: usuarioBackend } = resp.data;
+            const { user: usuarioBackend } = resp.data;
 
             const usuarioLimpio = normalizarUsuario(usuarioBackend);
 
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(usuarioLimpio));
+            sessionStorage.setItem('user', JSON.stringify(usuarioLimpio));
             setUser(usuarioLimpio);
 
             setTimeout(() => {
@@ -72,11 +69,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        navigate('/login');
+    const logout = async () => {
+        try {
+            await siaApi.post('/auth/logout');
+        } catch (err) {
+            console.error("Error al notificar cierre de sesión al servidor", err);
+
+        } finally {
+            sessionStorage.removeItem('user');
+            setUser(null);
+            navigate('/login');
+        }
     };
 
     return (

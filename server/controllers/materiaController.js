@@ -12,15 +12,14 @@ exports.crearMateria = async (req, res) => {
 
         res.status(201).json(
             {
-                msg: "Materua registrada exitosamente",
+                msg: "Materia registrada exitosamente",
                 id_materia: resultado.insertId
             }
         );
     } catch (error) {
-        console.error(error);
+        console.error("Error al crear una materia",error);
         res.status(500).json({
-            msg:"Error al registrar la materia",
-            error: error.message
+            msg:"Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -30,8 +29,9 @@ exports.obtenerMaterias = async (req, res) => {
         const [materias] = await db.query("SELECT * FROM materia WHERE activo = 1");
         res.json(materias);
     } catch (error) {
+        console.error("Error al obtener una materia: ", error)
         res.status(500).json({
-            msg: "Error al obtener las materias"
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };

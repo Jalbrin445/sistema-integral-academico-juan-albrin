@@ -45,8 +45,8 @@ exports.matricularEstudiante = async (req, res) => {
     } catch (error) {
         if (connection) await connection.rollback();
 
-        console.error(error);
-        res.status(500).json({ msg:"Error en la matrícula", error: error.message });
+        console.error("Error interno en el servidor al intentar matricular un estudiante:",error);
+        res.status(500).json({ msg:"Ocurrió un error interno en el servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -81,10 +81,9 @@ exports.listarEstudiantesPorGrupo = async (req, res) => {
 
         res.json(estudiantes);
     } catch (error) {
-        console.error(error);
+        console.error("Error al listar los estudiantes por grupo: ", error);
         res.status(500).json({
-            msg:"Error al obtener estudiantes", 
-            error: error.message
+            msg:"Ocurrió un error interno en el servidor"
         });
     }
 };

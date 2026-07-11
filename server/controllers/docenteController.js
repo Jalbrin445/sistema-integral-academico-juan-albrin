@@ -46,9 +46,8 @@ exports.registrarDocente = async (req, res) => {
             detalles: { usuario_id: id_usuario, persona_id: id_persona}
         });
     } catch (error) {
-        if (connection) await connection.rollback();
-        console.error("Error en registro docente:", error);
-        res.status(500).json({ msg: "Error al registrar docente", error: error.message});
+        console.error("Error interno en el servidor:", error);
+        res.status(500).json({ msg: "Ocurrió un error interno en el servidor"});
     } finally {
         if (connection) connection.release();
     }
@@ -67,8 +66,7 @@ exports.obtenerDocentes = async (req, res) => {
     } catch (error) {
         console.error("Error al obtener docentes:", error);
         res.status(500).json({ 
-            msg: "Error al obtener la lista de docentes", 
-            error: error.message 
+            msg:"Ocurrió un error interno en el servidor" 
         });
     }
 };

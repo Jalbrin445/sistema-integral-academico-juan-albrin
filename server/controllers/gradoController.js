@@ -8,8 +8,8 @@ exports.obtenerGrados = async (req, res) => {
         );
         res.json(rows);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: "Error al obtener los grados", error: error.message });
+        console.error("Ocurrió un error al intentar obtener los grados registrados: ",error);
+        res.status(500).json({ msg: "Error al obtener los grados" });
     }
 };
 
@@ -28,7 +28,7 @@ exports.crearGrado = async (req, res) => {
             id_grado: resultado.insertId 
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: "Error al crear el grado", error: error.message });
+        console.error("Error al crear un grado nuevo: ",error);
+        res.status(500).json({ msg: "Ocurrio un error interno en el servidor" });
     }
 };

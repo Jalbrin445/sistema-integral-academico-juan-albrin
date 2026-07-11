@@ -36,8 +36,7 @@ exports.registrarNota = async (req, res) => {
     } catch (error) {
         console.error("Error al registrar nota:", error);
         res.status(500).json({
-            msg: "Error en el servidor al registrar la nota",
-            error: error.message
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -75,8 +74,7 @@ exports.actualizarNota = async (req, res) => {
     } catch (error) {
         console.error("Error al actualizar nota:", error);
         res.status(500).json({
-            msg:"Error en el servidor al actualizar la nota",
-            error:error.message
+            msg:"Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -110,8 +108,7 @@ exports.obtenerNotasEstudiante = async (req, res) => {
     } catch (error) {
         console.error("Error en obtenerNotasEstudiante:", error);
         res.status(500).json({
-            msg:"Error al obtener boletín",
-            error:error.message
+            msg:"Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -157,10 +154,9 @@ exports.obtenerResumenMateriasEstudiante = async (req, res) => {
         res.json(materias);
 
     } catch (error) {
-        console.error("Error SQL:", error.message);
+        console.error("Error al obtener resumen de materias del estudiante", error.message);
         res.status(500).json({ 
-            msg: "Error al obtener el resumen", 
-            error: error.message 
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -194,9 +190,9 @@ exports.crearCriterioEvaluacion = async (req, res) => {
         });
 
     } catch (error) {
+        console.log("Error al crear criterio evaluación: ", error)
         res.status(500).json({
-            msg: "Error al crear el criterio",
-            error: error.message
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -230,8 +226,9 @@ exports.obtenerDetalleCriteriosEstudiante = async (req, res) => {
 
         res.json(detalles);
     } catch (error) {
+        console.error("Error al ibtener los deatalles de los criterios por estudiante: ", error);
         res.status(500).json({
-            msg: "Error al obtener el detalle", error: error.message
+            msg: "Error al obtener el detalle"
         });
     }
 };
@@ -255,9 +252,9 @@ exports.listarCriteriosPorAsignacion = async (req, res) => {
         }
         res.json(criterios);
     } catch (error) {
+        console.error("Ocurrió un error al listar los criterios por asignación: ", error)
         res.status(500).json({
-            msg: "Error al obtenr criterios",
-            error: error.message
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -275,6 +272,7 @@ exports.obtenerNotasPorCriterioYGrupo = async (req, res) => {
         // Enviamos las notas encontradas (puede ser un array vacío si es la primera vez)
         res.json(notas);
     } catch (error) {
-        res.status(500).json({ msg: "Error al obtener notas previas", error: error.message });
+        console.error("Ocurrio un error al obtener las notas por criterio de evaluación: ", error);
+        res.status(500).json({ msg: "Ocurrio un error interno en el servidor" });
     }
 };

@@ -27,10 +27,9 @@ exports.crearAsignacion = async (req, res) => {
             id_asignacion: resultado.insertId
         });
     } catch (error) {
-        console.error(error);
+        console.error("Error interno en el servidor al crear la asignacion:", error);
         res.status(500).json({
-            msg: "Error al crear la asignación", 
-            error: error.message
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -48,6 +47,7 @@ exports.obtenerCargaDocente = async (req, res) => {
         );
         res.json(carga);
     } catch (error) {
+        console.error("Ocurrió un error interno en el servidor al obtener la carga Docente: ", error)
         res.status(500).json({
             msg: "Error al obtener la carga del docente"
         });

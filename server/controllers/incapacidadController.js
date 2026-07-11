@@ -80,8 +80,7 @@ exports.subirIncapacidad = async (req, res) => {
 
             console.error("Error al registrar incapacidad:", error);
             res.status(500).json({
-                msg:"Error interno al procesar el reporte",
-                error: error.message
+                msg:"Error interno en el servidor"
             })
     }
 };
@@ -98,9 +97,9 @@ exports.obtenerIncapacidades = async (req, res) => {
         );
         res.json(lista);
     } catch (error) {
+        console.error("Error al obtener incapacidad:", error)
         res.status(500).json({
-            msg: "Error al obtener la lista", 
-            error: error.message
+            msg: "Ocurrió un error interno en el servidor"
         });
     }
 };
@@ -116,6 +115,7 @@ exports.revisarIncapacidad = async (req, res) => {
         );
         res.json({ msg: `Incapacidad ${nuevo_estado} correctamente` });
     } catch (error) {
-        res.status(500).json({ msg: "Error al actualizar estado", error: error.message });
+        console.error("Ocurrio un error en la revisión de la incapacidad:", error);
+        res.status(500).json({ msg: "Ocurrió un error interno en el servidor"});
     }
 };

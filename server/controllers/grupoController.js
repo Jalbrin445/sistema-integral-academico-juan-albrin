@@ -10,7 +10,8 @@ exports.obtenerGrupos = async (req, res) => {
         );
         res.json(rows);
     } catch (error) {
-        res.status(500).json({ msg: "Error al obtener grupos", error: error.message });
+        console.error("Error interno en el servidor", error);
+        res.status(500).json({ msg: "Ocurrió un error interno en el servidor" });
     }
 };
 
@@ -35,10 +36,9 @@ exports.crearGrupo = async (req, res) => {
             id_grupo: resultado.insertId 
         });
     } catch (error) {
-        console.error(error);
+        console.error("Error interno en el servidor al crear grupos: ", error);
         res.status(500).json({ 
-            msg: "Error al crear el grupo", 
-            error: error.message 
+            msg: "Ocurrió un error interno en el servidor"  
         });
     }
 };

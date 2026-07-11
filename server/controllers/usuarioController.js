@@ -68,7 +68,7 @@ exports.registrarUsuarioGeneral = async (req, res) => {
         
     } catch (error) {
         await connection.rollback();
-        console.error("Error detallado:", error);
+        console.error("Error al registrar usuarios generales detallado:", error);
         
         // Manejo de errores comunes de MySQL
         if (error.code === 'ER_DUP_ENTRY') {
@@ -76,9 +76,7 @@ exports.registrarUsuarioGeneral = async (req, res) => {
         }
 
         res.status(500).json({ 
-            msg: "Error al registrar en la base de datos", 
-            error: error.message,
-            sqlMessage: error.sqlMessage 
+            msg: "Ocurrio un error interno en el servidor" 
         });
     } finally {
         connection.release();
