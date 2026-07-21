@@ -26,7 +26,6 @@ const whitelist = [
     'https://sia-api.onrender.com'
 ];
 
-// Agregar FRONTEND_URL si existe
 if (process.env.FRONTEND_URL) {
     whitelist.push(process.env.FRONTEND_URL);
 }
@@ -36,7 +35,6 @@ console.log('📝 NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir solicitudes sin origin (Postman, curl, server-to-server)
         if (!origin) {
             return callback(null, true);
         }
@@ -63,12 +61,15 @@ const corsOptions = {
     optionsSuccessStatus: 200
 };
 
-// CORS primero
+// CORS primero - ESTO YA MANEJA OPTIONS AUTOMÁTICAMENTE
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
+// ❌ ELIMINADO: app.options('*', cors(corsOptions)); 
+// Express 5 no acepta '*' como patrón de ruta
+// El middleware cors() ya maneja las peticiones OPTIONS
 
 // ============================================
-// HELMET (seguridad)
+// HELMET
 // ============================================
 
 app.use(helmet({
@@ -100,7 +101,7 @@ app.use(cookieParser());
 app.use(requestLogger);
 
 // ============================================
-// REDIRECT HTTP A HTTPS (solo producción)
+// REDIRECT HTTP A HTTPS
 // ============================================
 
 app.use((req, res, next) => {
@@ -117,7 +118,7 @@ app.use((req, res, next) => {
 app.use('/api', apiLimiter);
 
 // ============================================
-// ARCHIVOS ESTÁTICOS (sin file-type para evitar errores)
+// ARCHIVOS ESTÁTICOS
 // ============================================
 
 app.use('/uploads', (req, res, next) => {
