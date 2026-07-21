@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi';
 import Swal from 'sweetalert2';
 import { useParams } from 'react-router-dom';
 
@@ -8,38 +8,72 @@ const ConfigurarCriterios = ({  }) => {
     const { idAsignacion, nombreMateria} = useParams();
     const [criterios, setCriterios] = useState([]);
     const [nuevoCriterio, setNuevoCriterio] = useState({ nombre_criterio: '', porcentaje: '' });
-    
+    const [cargando, setCargando] = useState(false);
 
     const cargarCriterios = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/notas/criterios/${idAsignacion}`, {
-                headers: { Authorization: `Bearer ${token}`}
-            });
+            setCargando(true);
+            const res = await siaApi.get(`/notas/criterios/${idAsignacion}`);
+            
             setCriterios(res.data);
         } catch (error) {
-            console.error("Error 401: no autoriza o token inválido", error);
-        }
-    };
+            console.error("Error al cargar criterios: ", error);
+            if (error.response?.status === 404) {
+                Swal.fire('Error', 'No se encontraron criterios para esta asignación', 'warning');
+            } else if (error.response?.status === 401) {
+                Swal.fire('Error', 'Sesión expirada, por favor inicia sesión nuevamente', 'error');
+            }
+        } finally {
+                setCargando(false);
+            }
+        };
 
-    useEffect(() => { if (idAsignacion) cargarCriterios(); }, [idAsignacion]);
+    useEffect(() => { 
+        if (idAsignacion) {
+            cargarCriterios();
+        } 
+    }, [idAsignacion]);
 
     const handleCrear = async (e) => {
         e.preventDefault();
+
+        if (!nuevoCriterio.nombre_criterio.trim()) {
+            Swal.fire('Error', 'El nobre del criterio es obligatorio', 'warning');
+            return;
+        }
+        
+        const porcentajeNum = parseFloat(nuevoCriterio.porcentaje);
+        if (!nuevoCriterio.porcentaje || porcentajeNum<1 || porcentajeNum>100) {
+            Swal.fire('Error', 'El porcentaje debe estar entre 1 y 100', 'warning');
+            return;
+        }
         try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/notas/crear-criterio', {
-                ...nuevoCriterio, id_asignacion: idAsignacion
-            }, {
-                headers: { Authorization: `Bearer ${token}`}
+            
+            await siaApi.post('/notas/crear-criterio', {
+                id_asignacion: idAsignacion,
+                nombre_criterio: nuevoCriterio.nombre_criterio,
+                porcentaje: parseFloat(nuevoCriterio.porcentaje)
             });
             Swal.fire('¡Listo!', 'Criterio agregado', 'success');
             setNuevoCriterio({ nombre_criterio: '', porcentaje: '' });
             cargarCriterios();
         } catch (error) {
-            Swal.fire('Error', error.response?.data?.msg || 'Error', 'error');
+            console.error('Error al crear criterio: ', error);
+            if (error.response?.data?.msg) {
+                Swal.fire('Error', error.response.data.msg, 'error');
+            } else {
+                Swal.fire('Error', 'Error al crear el criterio', 'error');
+            }
+            
         }
     };
+
+    const totalPorcentaje = criterios.reduce((sum, c) => sum + parseFloat(c.porcentaje), 0);
+    const restante = 100 - totalPorcentaje;
+
+    if (cargando) {
+        return <div className="text-center p-4">Cargando criterios...</div>;
+    }
 
     return (
         <div className="card-config-criterios p-4 mt-3">

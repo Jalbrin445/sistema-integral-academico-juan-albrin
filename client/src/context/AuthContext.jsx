@@ -21,7 +21,10 @@ export const AuthProvider = ({ children }) => {
         return {
             ...usuarioBackend,
             id: usuarioBackend.id_usuario || usuarioBackend.id_docente || usuarioBackend.docente_id_docente || usuarioBackend.id,
-            rol: usuarioBackend.rol_id_rol || usuarioBackend.rol || usuarioBackend.id_rol
+            rol: usuarioBackend.rol_id_rol || usuarioBackend.rol || usuarioBackend.id_rol,
+            id_estudiante: usuarioBackend.id_estudiante || null,
+            id_docente: usuarioBackend.id_docente || null,
+            id_usuario: usuarioBackend.id_usuario || null
         };
     };
 

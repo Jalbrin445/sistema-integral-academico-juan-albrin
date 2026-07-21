@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi';
 import Swal from 'sweetalert2';
 import { useNavigate, useParams } from 'react-router-dom';
 import './FormularioRegistro.css';
@@ -23,7 +23,7 @@ const FormularioRegistro = () => {
         contrasena: '',
         rol_id: '3', 
         codigo_estudiante: '',
-        grupo_id: '',
+        grupo_id_grupo: '',
         especialidad: '',
         titulo_profesional: ''
     });
@@ -32,10 +32,7 @@ const FormularioRegistro = () => {
     useEffect(() => {
         const cargarGrupos = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const res = await axios.get('http://localhost:5000/api/grupos', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await siaApi.get('/grupos')
                 setGrupos(res.data);
             } catch (err) {
                 console.error("Error al cargar grupos");
@@ -49,10 +46,8 @@ const FormularioRegistro = () => {
         if (id_usuario) {
             const cargarDatosUsuario = async () => {
                 try {
-                    const token = localStorage.getItem('token');
-                    const res = await axios.get(`http://localhost:5000/api/usuarios/${id_usuario}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    
+                    const res = await siaApi.get(`/usuarios/${id_usuario}`)
                     
                     // Mapeamos los datos que vienen del backend al estado del formulario
                     const datos = res.data;
@@ -66,7 +61,7 @@ const FormularioRegistro = () => {
                         ...formData,
                         ...datos,
                         rol_id: (datos.rol_id_rol || datos.rol_id).toString() || '3', // Ajuste por nombre en DB
-                        grupo_id: datos.grupo_id_grupo || datos.grupo_id || '',
+                        grupo_id_grupo: datos.grupo_id_grupo || datos.grupo_id || '',
                         contrasena: ''
                     });
                 } catch (err) {
@@ -85,17 +80,14 @@ const FormularioRegistro = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
             
             const url = id_usuario 
-                ? `http://localhost:5000/api/usuarios/actualizar/${id_usuario}` 
-                : 'http://localhost:5000/api/usuarios/registro';
+                ? `/usuarios/actualizar/${id_usuario}` 
+                : '/usuarios/registro';
             
             const metodo = id_usuario ? 'put' : 'post';
 
-            const res = await axios[metodo](url, formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await siaApi[metodo](url, formData);
             
             Swal.fire({
                 title: id_usuario ? '¡Actualización Exitosa!' : '¡Registro Exitoso!',
@@ -130,8 +122,8 @@ const FormularioRegistro = () => {
                             <h5 className="text-muted border-bottom pb-2 mb-3">Datos Personales</h5>
                             
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Tipo Doc.</label>
-                                <select className="form-select" name="tipo_identificacion" value={formData.tipo_identificacion} onChange={handleChange}>
+                                <label for="tipo_identificacion" className="form-label">Tipo Doc.</label>
+                                <select id="tipo_identificacion" className="form-select" name="tipo_identificacion" value={formData.tipo_identificacion} onChange={handleChange}>
                                     <option value="CC">Cédula de Ciudadanía</option>
                                     <option value="TI">Tarjeta de Identidad</option>
                                     <option value="CE">Cédula de Extranjería</option>
@@ -139,58 +131,53 @@ const FormularioRegistro = () => {
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Número Identificación</label>
-                                <input type="text" className="form-control" name="numero_identificacion" value={formData.numero_identificacion} required onChange={handleChange} />
+                                <label for="numero_identificacion" className="form-label">Número Identificación</label>
+                                <input id="numero_identificacion" type="text" className="form-control" name="numero_identificacion" value={formData.numero_identificacion} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Género</label>
-                                <select className="form-select" name="genero" value={formData.genero} onChange={handleChange}>
+                                <label for="genero" className="form-label">Género</label>
+                                <select id="genero" className="form-select" name="genero" value={formData.genero} onChange={handleChange}>
                                     <option value="M">Masculino</option>
                                     <option value="F">Femenino</option>
                                 </select>
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Nombres</label>
-                                <input type="text" className="form-control" name="nombres" value={formData.nombres} required onChange={handleChange} />
+                                <label for="nombres" className="form-label">Nombre(s)</label>
+                                <input id="nombres" type="text" className="form-control" name="nombres" value={formData.nombres} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-6 mb-3">
-                                <label className="form-label">Apellido Paterno</label>
-                                <input type="text" className="form-control" name="apellido_paterno" value={formData.apellido_paterno} required onChange={handleChange} />
+                                <label for="apellido_paterno" className="form-label">Apellido Paterno</label>
+                                <input id="apellido_paterno" type="text" className="form-control" name="apellido_paterno" value={formData.apellido_paterno} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-6 mb-3">
-                                <label className="form-label">Apellido Materno</label>
-                                <input type="text" className="form-control" name="apellido_materno" value={formData.apellido_materno} required onChange={handleChange} />
+                                <label for="apellido_materno" className="form-label">Apellido Materno</label>
+                                <input id="apellido_materno" type="text" className="form-control" name="apellido_materno" value={formData.apellido_materno} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Fecha de Nacimiento</label>
-                                <input type="date" className="form-control" name="fecha_nacimiento" value={formData.fecha_nacimiento} required onChange={handleChange} />
+                                <label for="fecha_nacimiento" className="form-label">Fecha de Nacimiento</label>
+                                <input id="fecha_nacimiento" type="date" className="form-control" name="fecha_nacimiento" value={formData.fecha_nacimiento} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Teléfono</label>
-                                <input type="text" className="form-control" name="telefono" value={formData.telefono} required onChange={handleChange} />
+                                <label for="telefono" className="form-label">Teléfono</label>
+                                <input id="telefono" type="text" className="form-control" name="telefono" value={formData.telefono} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Dirección de Residencia</label>
-                                <input type="text" className="form-control" name="direccion" value={formData.direccion} onChange={handleChange} placeholder="Ej: Calle 10 # 5-20" />
-                            </div>
-
-                            <div className="col-md-4 mb-3">
-                                <label className="form-label">Dirección</label>
-                                <input type="text" className="form-control" name="direccion" value={formData.direccion} onChange={handleChange} />
+                                <label for="direccion" className="form-label">Dirección de Residencia</label>
+                                <input id="direccion" type="text" className="form-control" name="direccion" value={formData.direccion} onChange={handleChange} placeholder="Ej: Calle 10 # 5-20" />
                             </div>
 
                             <h5 className="text-muted border-bottom mt-4 pb-2 mb-3">Configuración de Cuenta</h5>
                             
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Rol en el Sistema</label>
-                                <select className="form-select" name="rol_id" value={formData.rol_id} onChange={handleChange} disabled={!!id_usuario}>
+                                <label for="rol_id" className="form-label">Rol en el Sistema</label>
+                                <select id="rol_id" className="form-select" name="rol_id" value={formData.rol_id} onChange={handleChange} disabled={!!id_usuario}>
                                     <option value="1">Administrador</option>
                                     <option value="2">Docente</option>
                                     <option value="3">Estudiante</option>
@@ -198,19 +185,19 @@ const FormularioRegistro = () => {
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Correo Electrónico</label>
-                                <input type="email" className="form-control" name="correo_electronico" value={formData.correo_electronico} required onChange={handleChange} />
+                                <label for="correo_electronico" className="form-label">Correo Electrónico</label>
+                                <input id="correo_electronico" type="email" className="form-control" name="correo_electronico" value={formData.correo_electronico} required onChange={handleChange} />
                             </div>
 
                             <div className="col-md-4 mb-3">
-                                <label className="form-label">Nombre de Usuario</label>
-                                <input type="text" className="form-control" name="nombre_usuario" value={formData.nombre_usuario} required onChange={handleChange} />
+                                <label for="nombre_usuario" className="form-label">Nombre de Usuario</label>
+                                <input id="nombre_usuario" type="text" className="form-control" name="nombre_usuario" value={formData.nombre_usuario} required onChange={handleChange} />
                             </div>
 
                             {!id_usuario && (
                                 <div className="col-md-4 mb-3">
-                                    <label className="form-label">Contraseña</label>
-                                    <input type="password" className="form-control" name="contrasena" required onChange={handleChange} />
+                                    <label for="contrasena" className="form-label">Contraseña</label>
+                                    <input id="contrasena" type="password" className="form-control" name="contrasena" required onChange={handleChange} />
                                 </div>
                             )}
 
@@ -219,12 +206,12 @@ const FormularioRegistro = () => {
                                 <div className="row g-3 m-0 p-0">
                                     <h5 className="text-info border-bottom mt-4 pb-2 mb-3">Información Académica (Estudiante)</h5>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Código Estudiantil</label>
-                                        <input type="text" className="form-control" name="codigo_estudiante" value={formData.codigo_estudiante || ''} onChange={handleChange} />
+                                        <label for="codigo_estudiante" className="form-label">Código Estudiantil</label>
+                                        <input id="codigo_estudiante" type="text" className="form-control" name="codigo_estudiante" value={formData.codigo_estudiante || ''} onChange={handleChange} />
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Asignar Grupo</label>
-                                        <select className="form-select" name="grupo_id" value={formData.grupo_id || ''} onChange={handleChange}>
+                                        <label for="grupo_id_grupo" className="form-label">Asignar Grupo</label>
+                                        <select id="grupo_id_grupo" className="form-select" name="grupo_id_grupo" value={formData.grupo_id_grupo || ''} onChange={handleChange}>
                                             <option value="">Seleccione un grupo...</option>
                                             {grupos.map(g => (
                                                 <option key={g.id_grupo} value={g.id_grupo}>{g.nombre_grupo} - {g.nombre_grado}</option>
@@ -238,12 +225,12 @@ const FormularioRegistro = () => {
                                 <div className="row g-3 m-0 p-0">
                                     <h5 className="text-info border-bottom mt-4 pb-2 mb-3">Información Profesional (Docente)</h5>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Título Profesional</label>
-                                        <input type="text" className="form-control" name="titulo_profesional" value={formData.titulo_profesional || ''} onChange={handleChange} />
+                                        <label for="titulo_profesional" className="form-label">Título Profesional</label>
+                                        <input id="titulo_profesional" type="text" className="form-control" name="titulo_profesional" value={formData.titulo_profesional || ''} onChange={handleChange} />
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Especialidad</label>
-                                        <input type="text" className="form-control" name="especialidad" value={formData.especialidad || ''} onChange={handleChange} />
+                                        <label for="especialidad" className="form-label">Especialidad</label>
+                                        <input id="especialidad" type="text" className="form-control" name="especialidad" value={formData.especialidad || ''} onChange={handleChange} />
                                     </div>
                                 </div>
                             )}

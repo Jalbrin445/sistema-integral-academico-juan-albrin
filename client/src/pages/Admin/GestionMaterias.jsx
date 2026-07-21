@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi';
 import Swal from 'sweetalert2';
 import './GestionMaterias.css';
 
@@ -19,10 +19,7 @@ const GestionMaterias = () => {
 
     const cargarMaterias = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/materias', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await siaApi.get('/materias');
             setMaterias(res.data);
             setLoading(false);
         } catch (error) {
@@ -38,10 +35,8 @@ const GestionMaterias = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/materias', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            
+            await siaApi.post('/materias', formData);
 
             Swal.fire('¡Registrada!', 'La materia se ha creado correctamente', 'success');
             setFormData({ codigo_materia: '', nombre_materia: '', descripcion: '', intensidad_horaria_semanal: '' });

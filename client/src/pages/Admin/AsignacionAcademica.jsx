@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi';
 import Swal from 'sweetalert2';
 import './AsignacionAcademica.css';
 
@@ -23,13 +23,11 @@ const AsignacionAcademica = () => {
 
     const cargarDatosBase = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
 
             const [resGrupos, resMaterias, resDocentes] = await Promise.all([
-                axios.get('http://localhost:5000/api/grupos', config),
-                axios.get('http://localhost:5000/api/materias', config),
-                axios.get('http://localhost:5000/api/docentes', config)
+                siaApi.get('/grupos'),
+                siaApi.get('/materias'),
+                siaApi.get('/docentes')
             ]);
 
             setGrupos(resGrupos.data);
@@ -49,10 +47,7 @@ const AsignacionAcademica = () => {
     const handleAsignar = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/asignaciones', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await siaApi.post('asignaciones', formData);
 
             Swal.fire('¡Asignado!', res.data.msg, 'success');
             // Aquí podrías recargar la carga del grupo seleccionado

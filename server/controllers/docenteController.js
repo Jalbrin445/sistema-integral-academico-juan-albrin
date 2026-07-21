@@ -11,9 +11,63 @@ exports.registrarDocente = async (req, res) => {
         estado_admin
     } = req.body;
 
+    if (!numero_identificacion) {
+        return res.status(400).json({
+            msg: "El número de identificación es obligatorio"
+        });
+    }
+    if (!nombres) {
+        return res.status(400).json({
+            msg: "Los nombres son obligatorios"
+        });
+    }
+    if (!apellido_paterno){
+        return res.status(400).json({
+            msg:"Se requiere por lo menos un apellido (El primero)"
+        });
+    }
+    if (!nombre_usuario) {
+        return res.status(400).json({
+            msg:"El nombre de usuario es obligatorio"
+        });
+    }
+
+    if (!contrasena) {
+        return res.status(400).json({
+            msg: "La contraseña es obligatoria"
+        })
+    }
+    
+    if (contrasena.length < 6) {
+        return res.status(400).json({
+            msg: "La contraseña debe tener al menos 6 caracteres"
+        });
+    }
     try {
         connection = await db.getConnection();
         await connection.beginTransaction();
+
+        const [identificacionExiste] = await connection.query(
+            'SELECT id_persona FROM persona WHERE numero_identificacion = ?',
+            [numero_identificacion]
+        );
+        if (identificacionExiste.length > 0) {
+            await connection.rollback();
+            return res.status(400).json({
+                msg: "El número de identificación ya está registrado"
+            })
+        }
+
+        const [usuarioExiste] = await connection.query(
+            'SELECT id_usuario FROM usuario WHERE nombre_usuario = ?',
+            [nombre_usuario]
+        );
+        if (usuarioExiste.length > 0) {
+            await connection.rollback();
+            return res.status(400).json({
+                msg: "El nombre de usuario ya está en uso"
+            });
+        }
 
         const [personaRes] = await connection.query(
             `INSERT INTO persona (tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno, fecha_nacimiento, genero, telefono, correo_electronico, direccion)

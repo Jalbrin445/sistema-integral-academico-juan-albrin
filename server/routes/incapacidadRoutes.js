@@ -1,10 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const incapacidadController = require('../controllers/incapacidadController');
-const { verificarAdmin, esAdmin } = require('../middleware/authMiddleware');
+const { verificarToken, esAdmin } = require('../middleware/authMiddleware');
+const { validateIncapacidad, validateIdParam, handleValidationErrors } = require('../middleware/validators');
+const { apiLimiter } = require('../middleware/rateLimiter');
 
-router.post('/reportar', verificarAdmin, incapacidadController.uploadMiddleware, incapacidadController.subirIncapacidad);
-router.get('/listar', verificarAdmin, incapacidadController.obtenerIncapacidades);
-router.patch('/revisar/:id_incapacidad', verificarAdmin, esAdmin, incapacidadController.revisarIncapacidad);
+router.post('/reportar', 
+    verificarToken,
+    apiLimiter, 
+    incapacidadController.uploadMiddleware,
+    validateIncapacidad,
+    handleValidationErrors, 
+    incapacidadController.subirIncapacidad
+);
+
+router.get('/listar',
+    verificarToken, 
+    incapacidadController.obtenerIncapacidades
+);
+
+router.patch('/revisar/:id_incapacidad', 
+    verificarToken, 
+    esAdmin, 
+    validateIdParam,
+    handleValidationErrors,
+    incapacidadController.revisarIncapacidad
+);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import './Docente.css';
@@ -15,12 +15,10 @@ const CargaAcademica = () => {
             if (loading || !user?.id) return;
             
             try {
-                const token = localStorage.getItem('token');
-                // Usamos el ID normalizado (ya sea que viniera como id_docente o id_usuario) 
+                
+                 
 
-                const res = await axios.get(`http://localhost:5000/api/asignaciones/docente/${user.id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await siaApi.get(`/asignaciones/docente/${user.id_docente || user.id}`);
                 
                 setCarga(res.data);
             } catch (error) {

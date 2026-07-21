@@ -8,9 +8,27 @@ exports.registrarUsuarioGeneral = async (req, res) => {
         tipo_identificacion, numero_identificacion, nombres, apellido_paterno, apellido_materno,
         fecha_nacimiento, genero, telefono, correo_electronico, direccion,
         nombre_usuario, contrasena, rol_id,
-        codigo_estudiante, grupo_id,
+        codigo_estudiante, grupo_id_grupo,
         especialidad, titulo_profesional
     } = req.body;
+
+    if (!['1','2', '3'].includes(rol_id)) {
+        return res.status(400).json({
+            msg:"Rol no válido. Debe ser Administrador (1), Docente (2) o Estudiante (3)"
+        });
+    }
+
+    if (rol_id === '3' && (!codigo_estudiante || !grupo_id_grupo)) {
+        return res.status(400).json({
+            msg: "Para estudiante, el código y el grupo son obligatorios"
+        });
+    }
+
+    if (rol_id === '2' && (!titulo_profesional && !especialidad)) {
+        return res.status(400).json({
+            msg: "Para docentes, al menos título profesional o especialidad son obligatorios"
+        });
+    }
 
     try {
         await connection.beginTransaction();
@@ -48,14 +66,14 @@ exports.registrarUsuarioGeneral = async (req, res) => {
             await connection.query(
                 `INSERT INTO estudiante (codigo_estudiante, fecha_ingreso, estado, usuario_id_usuario, persona_id_persona, grupo_id_grupo) 
                 VALUES (?, ?, 'activo', ?, ?, ?)`,
-                [codigo_estudiante, fechaIngreso, id_usuario, id_persona, grupo_id]
+                [codigo_estudiante, fechaIngreso, id_usuario, id_persona, grupo_id_grupo]
             );
         } else if (rol_id === '2') { // Docente
             // Ajustado a tus columnas: persona_id_persona, usuario_id_usuario
             const codDocente = `DOC-${numero_identificacion.slice(-4)}`; // Generar código simple
             await connection.query(
                 `INSERT INTO docente (codigo_docente, titulo_profesional, especialidad, fecha_ingreso, estado, persona_id_persona, usuario_id_usuario) 
-                VALUES (?, ?, ?, ?, 'activo', ?, ?)`,
+                VALUES (?, ?, ?, ?, 'activo', ?, ?,?)`,
                 [codDocente, titulo_profesional, especialidad, fechaIngreso, id_persona, id_usuario]
             );
         }
@@ -156,7 +174,7 @@ exports.listarUsuariosPorRol = async (req, res) => {
             SELECT
             u.id_usuario, u.nombre_usuario, u.correo_electronico, u.activo,
             p.nombres, p.apellido_paterno, p.apellido_materno,
-            e.codigo_estudiante, g.nombre_grupo
+            NULL as codigo_estudiante, NULL as especialidad, NULL as id_docente, NULL as nombre_grupo
             FROM usuario u
             INNER JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
             INNER JOIN persona p ON e.persona_id_persona = p.id_persona
@@ -204,10 +222,27 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        // 1. Obtener el rol y el persona_id_persona buscando en las tablas de roles
-        // Intentamos buscar en estudiante
+        const [usaurioExiste] = await connection.query(
+            'SELECT id_usuario FROM usuario WHERE id_usuario = ?',
+            [id_usuario]
+        );
+        if (usaurioExiste.length === 0){
+            await connection.rollback();
+            return res.status(404).json({
+                msg: "Usuario no encontrado"
+            });
+        }
+
+        const idAdminLogueado = req.usuario.id || req.usuario.id_usuario;
+        if (parseInt(id_usuario) === idAdminLogueado) {
+            await connection.rollback();
+            return res.status(403).json({
+                msg:"No puedes modificar tu propia cuenta de administrador"
+            });
+        }
+
         let [vinculo] = await connection.query(
-            'SELECT persona_id_persona, 3 as rol FROM estudiante WHERE usuario_id_usuario = ?', 
+            'SELECT persona_id_persona, 3 as rol FROM estudiante WHERE usuario_id_usuario =?',
             [id_usuario]
         );
 
@@ -244,15 +279,35 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
 
         // 4. Actualizar datos específicos del Rol
         if (rol === 3) {
-            await connection.query(
-                `UPDATE estudiante SET codigo_estudiante = ?, grupo_id_grupo = ? WHERE usuario_id_usuario = ?`,
-                [codigo_estudiante, grupo_id_grupo, id_usuario]
-            );
+            if (codigo_estudiante !== undefined && grupo_id_grupo != undefined) {
+                await connection.query(
+                    `UPDATE estudiante SET codigo_estudiante = ?, grupo_id_grupo = ? WHERE usuario_id_usuario = ?`,
+                    [codigo_estudiante, grupo_id_grupo, id_usuario]
+                );
+            } else if (codigo_estudiante !== undefined) {
+                await connection.query(
+                    `UPDATE estudiante SET codigo_estudiante = ? WHERE usuario_id_usuario = ?`,
+                    [codigo_estudiante, id_usuario]
+                );
+            } else if (grupo_id_grupo !== undefined) {
+                await connection.query(
+                    `UPDATE estudiante SET grupo_id_grupo = ? WHERE usuario_id_usuario = ?`,
+                    [grupo_id_grupo, id_usuario]
+                );
+            }
         } else if (rol === 2) {
-            await connection.query(
-                `UPDATE docente SET especialidad = ?, titulo_profesional = ? WHERE usuario_id_usuario = ?`,
-                [especialidad, titulo_profesional, id_usuario]
-            );
+            if (especialidad !== undefined) {
+                await connection.query(
+                    `UPDATE docente SET especialidad = ?, titulo_profesional = ? WHERE usuario_id_usuario = ?`,
+                    [especialidad, titulo_profesional, id_usuario]
+                );
+            }
+            if (titulo_profesional !== undefined) {
+                await connection.query(
+                    `UPDATE docente SET titulo_profesional = ? WHERE usuario_id_usuario = ?`,
+                    [titulo_profesional, id_usuario]
+                );
+            }
         }
 
         await connection.commit();
@@ -269,10 +324,13 @@ exports.actualizarUsuarioGeneral = async (req, res) => {
 
 exports.obtenerUsuarioPorId = async (req, res) => {
     const { id_usuario } = req.params;
-
+    if (!id_usuario || isNaN(id_usuario)) {
+        return res.status(400).json({
+            msg: "ID de usuario inválido"
+        });
+    }
     try {
-        // Query corregida: Ya que usuario no tiene persona_id_persona,
-        // entramos por las tablas estudiante/docente para llegar a persona.
+        
         const query = `
             SELECT 
                 u.id_usuario, u.nombre_usuario, u.correo_electronico, u.rol_id_rol, u.activo,

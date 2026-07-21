@@ -2,74 +2,89 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const registrarIntentoFallido = async (nombre_usuario, ip) => {
+    try {
+        await db.query(
+            `INSERT into intentos_login (nombre_usuario, ip, fecha_intento)
+            VALUES (?, ?, NOW())`,
+            [nombre_usuario, ip]
+        );
+    } catch (error) {
+        console.error('Error registrando intento fallido:', error);
+    }
+};
+
 exports.login = async (req, res) => {
     const { nombre_usuario, contrasena } = req.body;
 
     try {
-        // 1. Buscamos al usuario y sus datos relacionados
-        // Corregido el JOIN: usamos persona_id_persona que es la FK en la tabla usuario
+        
         const [rows] = await db.query(
             `SELECT u.*, r.nombre_rol, p.nombres,
-                    d.id_docente
+                    d.id_docente,
+                    e.id_estudiante
             FROM usuario u
             JOIN rol r ON u.rol_id_rol = r.id_rol
             JOIN persona p ON u.id_usuario = p.id_persona
             LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
+            LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
             WHERE u.nombre_usuario = ?`, [nombre_usuario]
         );
 
         if (rows.length === 0) {
+            await registrarIntentoFallido(nombre_usuario, req.ip);
             return res.status(404).json({ msg: "Usuario no registrado" });
         }
 
         const user = rows[0];
 
-        // 2. VERIFICACIÓN DE ESTADO ACTIVO
         if (Number(user.activo) === 0) {
             return res.status(403).json({
-                msg: "Tu cuenta se encuentra inactiva. Por favor, comunícate o acércate a la oficina del colegio para más información."
+                msg: "Tu cuenta se encuentra inactiva. Por favor, comunícate con la administración."
             });
         }
 
-        // 3. VERIFICACIÓN DE CONTRASEÑA
         const validPass = await bcrypt.compare(contrasena, user.contrasena);
         if (!validPass) {
-            return res.status(400).json({ msg: "Contraseña incorrecta" });
+            await registrarIntentoFallido(nombre_usuario, req.ip);
+            return res.status(401).json({ msg: "Credenciales incorrectas" });
         }
 
-        // 4. GENERACIÓN DE TOKEN
         const token = jwt.sign(
-            { id: user.id_usuario, rol: user.rol_id_rol },
+            { 
+                id: user.id_usuario, 
+                rol: user.rol_id_rol,
+                nombre_usuario: user.nombre_usuario
+            },
             process.env.JWT_SECRET,
-            { expiresIn: '2h' }
+            { expiresIn: '8h' }
         );
 
-        // 5. REGISTRO DE ÚLTIMO ACCESO
         await db.query(
             `UPDATE usuario SET ultimo_acceso = NOW() WHERE id_usuario = ?`,
             [user.id_usuario]
         );
 
-        res.cookie('token',token,{
-            httpOnly:true,
-            secure:process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 2 * 60 * 60 *1000
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 8 * 60 * 60 * 1000
         });
-        
-        return res.json({
-            mensaje: 'Login exitoso', 
-            user: 
-                {
-                id:user.id_usuario,
-                id_docente: user.id_docente,
-                nombre: user.nombre_usuario,
-                nombres:user.nombres,
-                rol:user.nombre_rol,
-                rol_id_rol: user.rol_id_rol
-             }
-            });
 
+        return res.json({
+            mensaje: 'Login exitoso',
+            user: {
+                id: user.id_usuario,
+                id_usuario: user.id_usuario,
+                id_docente: user.id_docente || null,
+                id_estudiante: user.id_estudiante || null,
+                nombre: user.nombre_usuario,
+                nombres: user.nombres,
+                rol: user.nombre_rol,
+                rol_id_rol: user.rol_id_rol
+            }
+        });
     } catch (error) {
         console.error("Error en Login:", error);
         res.status(500).json({ msg: "Error interno en el servidor" });
@@ -78,25 +93,40 @@ exports.login = async (req, res) => {
 
 exports.verificarToken = async (req, res) => {
     try {
-        // Agregamos el JOIN con docente para no perder su ID al refrescar
+        
         const [rows] = await db.query(
-            `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, p.nombres, d.id_docente 
+            `SELECT u.id_usuario, u.nombre_usuario, u.rol_id_rol, u.activo,
+                    p.nombres, d.id_docente,
+                    e.id_estudiante
             FROM usuario u
             JOIN persona p ON u.id_usuario = p.id_persona
             LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
+            LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
             WHERE u.id_usuario = ?`, [req.usuario.id]
         );
 
-        if (rows.length === 0) return res.status(404).json({ msg: "Usuario no encontrado" });
+        if (rows.length === 0) {
+            return res.status(404).json({ msg: "Usuario no encontrado" });
+        }
 
-        // Devolvemos el usuario con la misma estructura que el Login
-        res.json({ 
+        const user = rows[0];
+
+        if (Number(user.activo) === 0) {
+            return res.status(403).json({
+                msg: "Usuario inactivo",
+                user: null
+            });
+        }
+
+        res.json({
             user: {
-                id: rows[0].id_usuario,
-                id_docente: rows[0].id_docente,
-                nombre: rows[0].nombre_usuario,
-                nombres: rows[0].nombres,
-                rol_id_rol: rows[0].rol_id_rol
+                id: user.id_usuario,
+                id_usuario: user.id_usuario,
+                id_docente: user.id_docente || null,
+                id_estudiante: user.id_estudiante || null,
+                nombre: user.nombre_usuario,
+                nombres: user.nombres,
+                rol_id_rol: user.rol_id_rol
             }
         });
     } catch (error) {
@@ -110,13 +140,11 @@ exports.logout = async (req, res) => {
         res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite:'strict'
+            sameSite: 'lax'
         });
-        return res.json({msg:"Sesión cerrada exitosamente en el servidor"});
+        return res.json({ msg: "Sesión cerrada exitosamente" });
     } catch (error) {
         console.error("Error en Logout:", error);
-        res.status(500).json({
-            msg:"Error interno en el servidor"
-        })
+        res.status(500).json({ msg: "Error interno en el servidor" });
     }
 };

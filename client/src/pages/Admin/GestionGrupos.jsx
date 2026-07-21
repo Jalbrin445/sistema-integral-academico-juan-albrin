@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import siaApi from '../../api/siaApi'
 import Swal from 'sweetalert2';
-import './GestionGrupos.css'; // Asegúrate de crear este CSS
+import './GestionGrupos.css'; 
 
 const GestionGrupos = () => {
     const [grupos, setGrupos] = useState([]);
@@ -23,14 +23,12 @@ const GestionGrupos = () => {
 
     const cargarDatosIniciales = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
 
             // Ejecutamos las peticiones en paralelo para ganar velocidad
             const [resGrupos, resGrados, resDocentes] = await Promise.all([
-                axios.get('http://localhost:5000/api/grupos', config),
-                axios.get('http://localhost:5000/api/grados', config), // Asegúrate de tener esta ruta
-                axios.get('http://localhost:5000/api/docentes', config)
+                siaApi.get('/grupos'),
+                siaApi.get('/grados'), // Asegúrate de tener esta ruta
+                siaApi.get('/docentes')
             ]);
 
             setGrupos(resGrupos.data);
@@ -50,10 +48,7 @@ const GestionGrupos = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/grupos', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await siaApi.post('/grupos', formData);
 
             Swal.fire('¡Éxito!', 'El grupo ha sido configurado correctamente', 'success');
             setFormData({ ...formData, nombre_grupo: '' }); // Limpiar campo

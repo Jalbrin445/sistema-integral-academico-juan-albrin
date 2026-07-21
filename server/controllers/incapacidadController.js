@@ -52,9 +52,70 @@ exports.subirIncapacidad = async (req, res) => {
         );
     }
 
-        const { fecha_inicio, fecha_fin, motivo, docente_id_docente } = req.body;
-        const archivo_url = req.file.filename;
+    const { fecha_inicio, fecha_fin, motivo, docente_id_docente } = req.body;
+    const archivo_url = req.file.filename;
 
+    if (!fecha_inicio) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({
+            msg: "La fecha de inicio es obligatoria"
+        });
+    }
+
+    if (!fecha_fin) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({
+            msg: "La fecha de fin es obligatoria"
+        });
+    }
+
+    if (!motivo) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ 
+            msg: "El motivo es obligatorio"
+        });
+    }
+    if (!docente_id_docente) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({
+            msg: "El ID del docente es obligatorio"
+        });
+    }
+
+    const fechaInicio = new Date(fecha_inicio);
+    const fechaFin = new Date(fecha_fin);
+    if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({
+            msg: "Fechas inválidas"
+        });
+    }
+
+    if (fechaFin < fechaInicio) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({
+            msg: "La fecha de fin debe ser posterior a la fecha de inicio"
+        });
+    }
+
+    const [docenteExiste] = await db.query(
+        'SELECT id_docente FROM docente WHERE id_docente = ? AND estado = "activo"',
+        [docente_id_docente]
+    );
+
+    if (docenteExiste.length === 0) {
+        const filePath = path.join(__dirname, '../uploads/incapacidades', archivo_url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(404).json({
+            msg: "Docente no encontrado o inactivo"
+        });
+    } 
 
     try {
             const [resultado] = await db.query(
@@ -108,7 +169,29 @@ exports.revisarIncapacidad = async (req, res) => {
     const { id_incapacidad } = req.params;
     const { nuevo_estado } = req.body; // 'aprobada' o 'rechazada'
 
+    if (!id_incapacidad || isNaN(id_incapacidad)) {
+        return res.status(400).json({ 
+            msg: "ID de incapacidad inválido"
+        });
+    }
+    if (!nuevo_estado || !['aprobada', 'rechazada'].includes(nuevo_estado)) {
+        return res.status(400).json({
+            msg: "Estado inválido. Debe ser 'aprobada' o 'rechazada'"
+        });
+    }
+
     try {
+        const [incapcaidadExiste] = await db.query(
+            'SELECT id_incapacidad FROM incapacidad WHERE id_incapacidad = ?',
+            [id_incapacidad]
+        );
+
+        if (incapcaidadExiste.length === 0) {
+            return res.status(404).json({
+                msg: "Incapacidad no encontrada"
+            });
+        }
+        
         await db.query(
             "UPDATE incapacidad SET estado = ? WHERE id_incapacidad = ?",
             [nuevo_estado, id_incapacidad]

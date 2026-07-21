@@ -45,21 +45,27 @@ function Login() {
 
                 <form onSubmit={manejarEnvio} autoComplete="off">
                     <div>
-                        <label>Nombre de Usuario</label>
-                        <input 
+                        <label for="username">Nombre de Usuario</label>
+                        <input
+                            id="username"
+                            name="username" 
                             type="text" 
                             value={nombre_usuario} 
                             onChange={(e) => setNombreUsuario(e.target.value)}
                             required
+                            autoComplete='on'
                         />
                     </div>
                     <div>
-                        <label>Contraseña</label>
+                        <label for="password">Contraseña</label>
                         <input
+                            id="password"
+                            name="password"
                             type="password"
                             value={contrasena}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            autoComplete='on'
                         />
                     </div>
                     <div className="login-olvidaste-contrasena">
