@@ -2,6 +2,15 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+    maxAge: 8 * 60 * 60 * 1000
+};
+
 const registrarIntentoFallido = async (nombre_usuario, ip) => {
     try {
         await db.query(
@@ -65,12 +74,7 @@ exports.login = async (req, res) => {
             [user.id_usuario]
         );
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 8 * 60 * 60 * 1000
-        });
+        res.cookie('token', token, cookieOptions);
 
         return res.json({
             mensaje: 'Login exitoso',
@@ -139,8 +143,9 @@ exports.logout = async (req, res) => {
     try {
         res.clearCookie('token', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            path: '/'
         });
         return res.json({ msg: "Sesión cerrada exitosamente" });
     } catch (error) {
