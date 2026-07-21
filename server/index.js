@@ -19,8 +19,8 @@ app.set('trust proxy', 1);
 // ============================================
 
 const whitelist = [
-    'http://localhost:5173', 
-    'http://localhost:3000', 
+    'http://localhost:5173',
+    'http://localhost:3000',
     'https://sia-apijamg.netlify.app',
     'https://sia-api-7m74.onrender.com',
     'https://sia-api.onrender.com'
@@ -30,16 +30,18 @@ if (process.env.FRONTEND_URL) {
     whitelist.push(process.env.FRONTEND_URL);
 }
 
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+    if (whitelist.includes(origin)) return true;
+    return /https:\/\/.*\.netlify\.app$/.test(origin) || /https:\/\/.*\.onrender\.com$/.test(origin);
+};
+
 console.log('📝 Whitelist CORS:', whitelist);
 console.log('📝 NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin) {
-            return callback(null, true);
-        }
-        
-        if (whitelist.indexOf(origin) !== -1) {
+        if (isAllowedOrigin(origin)) {
             callback(null, true);
         } else {
             console.error('❌ CORS bloqueado:', origin);
@@ -79,7 +81,15 @@ app.use(helmet({
             imgSrc: ["'self'", "data:", "https:"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            connectSrc: ["'self'", "https://sia-apijamg.netlify.app", "http://localhost:5173"],
+            connectSrc: [
+                "'self'",
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://sia-apijamg.netlify.app",
+                "https://*.netlify.app",
+                "https://sia-api-7m74.onrender.com",
+                "https://sia-api.onrender.com"
+            ],
         },
     },
     crossOriginEmbedderPolicy: false,
@@ -146,6 +156,14 @@ app.use('/api/asignaciones', require('./routes/asignacionRoutes'));
 app.use('/api/notas', require('./routes/notaRoutes'));
 app.use('/api/incapacidades', require('./routes/incapacidadRoutes'));
 app.use('/api/periodos', require('./routes/periodoRoutes'));
+
+// ============================================
+// HEALTH CHECK
+// ============================================
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 
 // ============================================
 // 404
