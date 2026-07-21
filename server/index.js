@@ -76,9 +76,9 @@ app.use((req, res, next) => {
     next();
 })
 
-app.use('/api', csrfProtection);
-app.use('/api', csrfTokenMiddleware);
-app.use('/api', csrfHeaderCheck);
+//app.use('/api', csrfProtection);
+//app.use('/api', csrfTokenMiddleware);
+//app.use('/api', csrfHeaderCheck);
 
 // El rate limiting general para todas las rutas de la API REST
 app.use('/api', apiLimiter);
