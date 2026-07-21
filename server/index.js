@@ -37,6 +37,8 @@ const whitelist = [
     'http://localhost:5173', 
     'http://localhost:3000', 
     'https://sia-apijamg.netlify.app',
+    'https://sia-api-7m74.onrender.com',
+    'https://sia-api.onrender.com',
     process.env.FRONTEND_URL].filter(Boolean);
 
 const corsOptions = {
