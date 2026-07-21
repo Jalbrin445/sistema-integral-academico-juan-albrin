@@ -33,7 +33,11 @@ app.use(helmet({
 
 
 
-const whitelist = ['http://localhost:5173', 'http://localhost:3000', process.env.FRONTEND_URL].filter(Boolean);
+const whitelist = [
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'https://sia-apijamg.netlify.app',
+    process.env.FRONTEND_URL].filter(Boolean);
 
 const corsOptions = {
     origin: function (origin, callback) {
