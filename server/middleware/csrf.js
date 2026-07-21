@@ -11,7 +11,7 @@ const csrfProtection = csrf({
 
 const csrfTokenMiddleware = (req, res, next) => {
     const excludedPaths = ['/login', '/register', '/logout'];
-    if (excludedPaths.some(path => res.path.includes(path))) {
+    if (excludedPaths.some(path => req.path.includes(path))) {
         return next();
     }
 
