@@ -4,21 +4,18 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const helmet = require('helmet');
 const fs = require('fs');
-const fileType = require('file-type');
 require('dotenv').config();
 
 const { apiLimiter } = require('./middleware/rateLimiter');
-const { csrfProtection, csrfTokenMiddleware, csrfHeaderCheck } = require('./middleware/csrf');
 const { requestLogger } = require('./utils/logger');
-const { checkSessionTimeout } = require('./middleware/sessionControl')
-const {fileAccess} = require('./middleware/fileAccess');
+const { fileAccess } = require('./middleware/fileAccess');
 
 const app = express();
 
 app.set('trust proxy', 1);
 
 // ============================================
-// CONFIGURACIÓN CORS CORREGIDA PARA PRODUCCIÓN
+// CONFIGURACIÓN CORS
 // ============================================
 
 const whitelist = [
@@ -26,31 +23,29 @@ const whitelist = [
     'http://localhost:3000', 
     'https://sia-apijamg.netlify.app',
     'https://sia-api-7m74.onrender.com',
-    'https://sia-api.onrender.com',
-    process.env.FRONTEND_URL
-].filter(Boolean);
+    'https://sia-api.onrender.com'
+];
 
-console.log('📝 Whitelist CORS configurada:', whitelist);
-console.log('📝 NODE_ENV:', process.env.NODE_ENV);
-console.log('📝 FRONTEND_URL:', process.env.FRONTEND_URL);
+// Agregar FRONTEND_URL si existe
+if (process.env.FRONTEND_URL) {
+    whitelist.push(process.env.FRONTEND_URL);
+}
+
+console.log('📝 Whitelist CORS:', whitelist);
+console.log('📝 NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir solicitudes sin origin (Postman, curl, etc.)
+        // Permitir solicitudes sin origin (Postman, curl, server-to-server)
         if (!origin) {
-            console.log('✅ CORS: Solicitud sin origin permitida (Postman/curl)');
             return callback(null, true);
         }
         
-        console.log('🔍 CORS - Origin recibido:', origin);
-        
         if (whitelist.indexOf(origin) !== -1) {
-            console.log('✅ CORS: Origin permitido:', origin);
             callback(null, true);
         } else {
-            console.error('❌ CORS BLOQUEADO para origin:', origin);
-            console.error('❌ Whitelist actual:', whitelist);
-            callback(new Error('No permitido por CORS (Seguridad del Sistema)'));
+            console.error('❌ CORS bloqueado:', origin);
+            callback(new Error('No permitido por CORS'));
         }
     },
     credentials: true,
@@ -65,87 +60,78 @@ const corsOptions = {
         'X-Requested-With'
     ],
     exposedHeaders: ['XSRF-TOKEN'],
-    preflightContinue: false,
-    optionsSuccessStatus: 200 // Algunos navegadores (Chrome) tienen problemas con 204
+    optionsSuccessStatus: 200
 };
 
-// ============================================
-// MIDDLEWARES EN ORDEN CORRECTO
-// ============================================
-
-// 1. CORS PRIMERO (antes que cualquier otra cosa)
+// CORS primero
 app.use(cors(corsOptions));
-
-// 2. Manejo explícito de OPTIONS para TODAS las rutas
 app.options('*', cors(corsOptions));
 
-// 3. Helmet con configuración ajustada para CORS
+// ============================================
+// HELMET (seguridad)
+// ============================================
+
 app.use(helmet({
     contentSecurityPolicy: {
-        directives:{
-            defaultSrc:["'self'"],
+        directives: {
+            defaultSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "https:"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            connectSrc: ["'self'", process.env.VITE_API_URL || "http://localhost:5000", "http://localhost:5173", "https://sia-apijamg.netlify.app"],
+            connectSrc: ["'self'", "https://sia-apijamg.netlify.app", "http://localhost:5173"],
         },
     },
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin"}
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// 4. Body parsers
-app.use(express.json({ limit:'10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// ============================================
+// BODY PARSERS
+// ============================================
 
-// 5. Cookie parser
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// 6. Logger
+// ============================================
+// LOGGER
+// ============================================
+
 app.use(requestLogger);
 
-// 7. Redirect HTTP a HTTPS en producción
+// ============================================
+// REDIRECT HTTP A HTTPS (solo producción)
+// ============================================
+
 app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production' && !req.secure) {
-        return res.redirect(`https://${req.headers.host}${req.url}`);
+    if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(301, `https://${req.headers.host}${req.url}`);
     }
     next();
 });
 
-// 8. CSRF desactivado temporalmente para pruebas
-// NOTA: Cuando quieras activar CSRF, descomenta estas líneas
-// app.use('/api', csrfProtection);
-// app.use('/api', csrfTokenMiddleware);
-// app.use('/api', csrfHeaderCheck);
+// ============================================
+// RATE LIMITING
+// ============================================
 
-// 9. Rate limiting
 app.use('/api', apiLimiter);
 
-// 10. Archivos estáticos con seguridad
-app.use('/uploads', async (req, res, next) => {
+// ============================================
+// ARCHIVOS ESTÁTICOS (sin file-type para evitar errores)
+// ============================================
+
+app.use('/uploads', (req, res, next) => {
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx'];
     const ext = path.extname(req.path).toLowerCase();
+    
     if (!allowedExtensions.includes(ext)) {
-        return res.status(403).json({ msg:'Este tipo de archivo no es permitido' });
-    }
-
-    const filePath = path.join(__dirname, 'uploads', req.path);
-    if (fs.existsSync(filePath)){
-        try {
-            const buffer = fs.readFileSync(filePath);
-            const type = await fileType.fromBuffer(buffer);
-            if (!type) {
-                return res.status(403).json({ msg: 'Archivo corrupto o inválido' });
-            }
-        } catch (error) {
-            return res.status(500).json({ msg: 'Error al verificar el archivo' });
-        }
+        return res.status(403).json({ msg: 'Tipo de archivo no permitido' });
     }
     next();
 }, fileAccess, express.static(path.join(__dirname, 'uploads')));
 
 // ============================================
-// RUTAS DE LA API
+// RUTAS API
 // ============================================
 
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -161,26 +147,28 @@ app.use('/api/incapacidades', require('./routes/incapacidadRoutes'));
 app.use('/api/periodos', require('./routes/periodoRoutes'));
 
 // ============================================
-// MANEJO DE ERRORES
+// 404
 // ============================================
 
-// 404 - Ruta no encontrada
-app.use((req, res) =>{
+app.use((req, res) => {
     res.status(404).json({ msg: 'Ruta no encontrada' });
 });
 
-// Error global
-app.use((err, req, res, next) => {
-    console.error('❌ Error global: ', err);
+// ============================================
+// ERROR HANDLER
+// ============================================
 
-    if (err.code === 'EBADCSRFTOKEN') {
-        return res.status(403).json({ msg: 'Token CSRF inválido o expirado' });
+app.use((err, req, res, next) => {
+    console.error('❌ Error:', err.message);
+    
+    if (err.message && err.message.includes('CORS')) {
+        return res.status(403).json({ msg: err.message });
     }
 
     res.status(500).json({
-        msg:'Error interno del servidor',
+        msg: 'Error interno del servidor',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    }); 
+    });
 });
 
 // ============================================
@@ -188,7 +176,8 @@ app.use((err, req, res, next) => {
 // ============================================
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
