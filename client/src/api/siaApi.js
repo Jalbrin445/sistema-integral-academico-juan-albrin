@@ -2,32 +2,14 @@ import axios from 'axios';
 
 const siaApi = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-    withCredentials:true,
+    withCredentials: true,
     headers: {
-        'Content-Type':'application/json',
+        'Content-Type': 'application/json',
     },
 });
 
-siaApi.interceptors.request.use(
-    (config) => {
-        const csrfToken = document.cookie
-            .split(';')
-            .find(row => row.startsWith('XSRF-TOKEN='))
-            ?.split('=')[1];
-        
-        const mutatingMethods = ['post', 'put', 'patch', 'delete'];
-        if (mutatingMethods.includes(config.method?.toLowerCase()) && csrfToken) {
-            config.headers['X-XSRF-TOKEN'] = csrfToken;
-            config.headers['X-CSRF-TOKEN'] = csrfToken;
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
+// ELIMINADO: Interceptor CSRF (backend lo tiene desactivado)
+// Si en el futuro activas CSRF en el backend, vuelve a añadirlo
 
 siaApi.interceptors.response.use(
     response => response,
@@ -39,12 +21,8 @@ siaApi.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
-        if (error.response?.status === 403 && error.response?.data?.msg?.includes('CSRF')) {
-            window.location.reload();
-        }
         return Promise.reject(error);
     }
 );
-
 
 export default siaApi;
