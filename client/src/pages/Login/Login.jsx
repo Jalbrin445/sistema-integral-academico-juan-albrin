@@ -26,16 +26,20 @@ function Login() {
     return (
         <div className="login-page">
             <div className="login-container">
+                <div className="login-brand">
+                    <span className="login-brand-icon">🎓</span>
+                    <span>Sistema Integral Académico</span>
+                </div>
                 <h2>Iniciar Sesión</h2>
-                
+                <p className="login-subtitle">Accede a tu cuenta con tus credenciales institucionales.</p>
                 
                 {error && (
                     <p style={{ 
                         color: '#842029', 
                         backgroundColor: '#f8d7da', 
                         padding: '10px', 
-                        borderRadius: '5px', 
-                        fontSize: '0.85rem',
+                        borderRadius: '8px', 
+                        fontSize: '0.9rem',
                         border: '1px solid #f5c2c7',
                         marginBottom: '15px'
                     }}>
@@ -45,19 +49,19 @@ function Login() {
 
                 <form onSubmit={manejarEnvio} autoComplete="off">
                     <div>
-                        <label for="username">Nombre de Usuario</label>
+                        <label htmlFor="username">Nombre de Usuario</label>
                         <input
                             id="username"
-                            name="username" 
-                            type="text" 
-                            value={nombre_usuario} 
+                            name="username"
+                            type="text"
+                            value={nombre_usuario}
                             onChange={(e) => setNombreUsuario(e.target.value)}
                             required
                             autoComplete='on'
                         />
                     </div>
                     <div>
-                        <label for="password">Contraseña</label>
+                        <label htmlFor="password">Contraseña</label>
                         <input
                             id="password"
                             name="password"
