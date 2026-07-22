@@ -35,9 +35,9 @@ exports.login = async (req, res) => {
                     e.id_estudiante
             FROM usuario u
             JOIN rol r ON u.rol_id_rol = r.id_rol
-            JOIN persona p ON u.id_usuario = p.id_persona
-            LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
             LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
+            LEFT JOIN docente d ON u.id_usuario = d.usuario_id_usuario
+            LEFT JOIN persona p ON p.id_persona = COALESCE(e.persona_id_persona, d.persona_id_persona, u.id_usuario)
             WHERE u.nombre_usuario = ?`, [nombre_usuario]
         );
 
@@ -104,9 +104,9 @@ exports.verificarToken = async (req, res) => {
                     p.nombres, d.id_docente,
                     e.id_estudiante
             FROM usuario u
-            JOIN persona p ON u.id_usuario = p.id_persona
-            LEFT JOIN docente d ON p.id_persona = d.persona_id_persona
             LEFT JOIN estudiante e ON u.id_usuario = e.usuario_id_usuario
+            LEFT JOIN docente d ON u.id_usuario = d.usuario_id_usuario
+            LEFT JOIN persona p ON p.id_persona = COALESCE(e.persona_id_persona, d.persona_id_persona, u.id_usuario)
             WHERE u.id_usuario = ?`, [req.usuario.id]
         );
 
