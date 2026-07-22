@@ -9,6 +9,7 @@ const FormularioRegistro = () => {
     const { id_usuario } = useParams(); // Detecta si estamos editando
     const [grupos, setGrupos] = useState([]);
     const [errorFecha, setErrorFecha] = useState('');
+    const [errorGeneral, setErrorGeneral] = useState('');
     const [formData, setFormData] = useState({
         tipo_identificacion: 'CC',
         numero_identificacion: '',
@@ -76,7 +77,8 @@ const FormularioRegistro = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setErrorGeneral('');
 
         if (name === 'fecha_nacimiento') {
             if (!value) {
@@ -109,6 +111,7 @@ const FormularioRegistro = () => {
         }
 
         setErrorFecha('');
+        setErrorGeneral('');
 
         try {
             const url = id_usuario 
@@ -132,7 +135,7 @@ const FormularioRegistro = () => {
                 || err.response?.data?.msg
                 || 'Error en la operación';
 
-            setErrorFecha(mensajeValidacion);
+            setErrorGeneral(mensajeValidacion);
             Swal.fire('Error', mensajeValidacion, 'error');
         }
     };
@@ -153,6 +156,11 @@ const FormularioRegistro = () => {
                 </div>
                 <div className="card-body p-4">
                     <form onSubmit={handleSubmit}>
+                        {errorGeneral && (
+                            <div className="alert alert-danger mb-4" role="alert">
+                                {errorGeneral}
+                            </div>
+                        )}
                         <div className="row">
                             <h5 className="text-muted border-bottom pb-2 mb-3">Datos Personales</h5>
                             
