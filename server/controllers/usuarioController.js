@@ -73,7 +73,7 @@ exports.registrarUsuarioGeneral = async (req, res) => {
             const codDocente = `DOC-${numero_identificacion.slice(-4)}`; // Generar código simple
             await connection.query(
                 `INSERT INTO docente (codigo_docente, titulo_profesional, especialidad, fecha_ingreso, estado, persona_id_persona, usuario_id_usuario) 
-                VALUES (?, ?, ?, ?, 'activo', ?, ?,?)`,
+                VALUES (?, ?, ?, ?, 'activo', ?, ?)`,
                 [codDocente, titulo_profesional, especialidad, fechaIngreso, id_persona, id_usuario]
             );
         }
