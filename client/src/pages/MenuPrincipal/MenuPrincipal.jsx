@@ -28,9 +28,14 @@ function MenuPrincipal() {
     return (
         <div className="menu-layout">
             <aside className={`sidebar ${isSidebarOpen ? '' : 'hidden'}`}>
-                <div className="flecha-retorno" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                    {isSidebarOpen ? "❮" : "❯"}
-                </div>
+                <button
+                    type="button"
+                    className="flecha-retorno"
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    aria-label={isSidebarOpen ? 'Cerrar menú lateral' : 'Abrir menú lateral'}
+                >
+                    {isSidebarOpen ? '❮' : '❯'}
+                </button>
 
                 {isSidebarOpen && (
                     <nav className="sidebar-nav">
@@ -51,7 +56,16 @@ function MenuPrincipal() {
             </aside>
 
             <main className={`main-content ${isSidebarOpen ? '' : 'full-width'}`}>
-                {!isSidebarOpen && <div className="abrir-sidebar" onClick={() => setIsSidebarOpen(true)}>❯</div>}
+                {!isSidebarOpen && (
+                    <button
+                        type="button"
+                        className="abrir-sidebar"
+                        onClick={() => setIsSidebarOpen(true)}
+                        aria-label="Abrir menú lateral"
+                    >
+                        ☰
+                    </button>
+                )}
                 <div className='container-dinamico'>
                     <Outlet/>
                 </div>
