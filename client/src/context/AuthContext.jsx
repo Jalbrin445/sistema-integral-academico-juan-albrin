@@ -36,18 +36,14 @@ export const AuthProvider = ({ children }) => {
             }
 
             try {
-                console.log('🔄 Verificando sesión...');
                 const resp = await siaApi.get('/auth/verify');
-                console.log('✅ Sesión verificada:', resp.data);
                 const datosRaw = resp.data.user;
                 const usuarioLimpio = normalizarUsuario(datosRaw);
 
                 if (usuarioLimpio) {
                     setUser(usuarioLimpio);
                     sessionStorage.setItem('user', JSON.stringify(usuarioLimpio));
-                    console.log('👤 Usuario cargado:', usuarioLimpio);
                 } else {
-                    console.log('⚠️ No hay usuario, cerrando sesión');
                     sessionStorage.removeItem('user');
                     setUser(null);
                 }
@@ -66,23 +62,16 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (nombre_usuario, contrasena) => {
-        console.log('🔑 Intentando login...');
-        console.log('📡 URL:', import.meta.env.VITE_API_URL);
-        
         try {
             const resp = await siaApi.post('/auth/login', { nombre_usuario, contrasena });
-            console.log('✅ Login exitoso - Respuesta:', resp.data);
             
             const { user: usuarioBackend } = resp.data;
-            console.log('👤 Usuario recibido del backend:', usuarioBackend);
 
             const usuarioLimpio = normalizarUsuario(usuarioBackend);
-            console.log('👤 Usuario normalizado:', usuarioLimpio);
 
             sessionStorage.setItem('user', JSON.stringify(usuarioLimpio));
             setUser(usuarioLimpio);
             
-            console.log('🚀 Redirigiendo a /MenuPrincipal');
             navigate('/MenuPrincipal');
         } catch (error) {
             console.error('❌ Error en login:', error);
@@ -94,7 +83,6 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            console.log('🚪 Cerrando sesión...');
             await siaApi.post('/auth/logout');
         } catch (err) {
             console.error("Error al notificar cierre de sesión:", err);
