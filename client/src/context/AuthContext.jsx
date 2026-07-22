@@ -29,6 +29,12 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const verificarSessionActiva = async () => {
+            const savedUser = sessionStorage.getItem('user');
+            if (!savedUser) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 console.log('🔄 Verificando sesión...');
                 const resp = await siaApi.get('/auth/verify');
@@ -42,11 +48,15 @@ export const AuthProvider = ({ children }) => {
                     console.log('👤 Usuario cargado:', usuarioLimpio);
                 } else {
                     console.log('⚠️ No hay usuario, cerrando sesión');
-                    logout();
+                    sessionStorage.removeItem('user');
+                    setUser(null);
                 }
             } catch (error) {
-                console.error('❌ Sesión expirada o no válida:', error.response?.status, error.response?.data);
-                logout();
+                console.warn('⚠️ Sesión no disponible en este momento:', error.response?.status);
+                const savedUserData = sessionStorage.getItem('user');
+                if (!savedUserData) {
+                    setUser(null);
+                }
             } finally {
                 setLoading(false);
             }
