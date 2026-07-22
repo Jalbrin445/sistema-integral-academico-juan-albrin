@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = require('../config/jwtSecret');
 
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
@@ -65,7 +66,7 @@ exports.login = async (req, res) => {
                 rol: user.rol_id_rol,
                 nombre_usuario: user.nombre_usuario
             },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '8h' }
         );
 

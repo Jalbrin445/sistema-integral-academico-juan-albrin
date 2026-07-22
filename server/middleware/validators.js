@@ -3,12 +3,16 @@ const { body, param, query, validationResult } = require('express-validator');
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        const mappedErrors = errors.array().map(err => ({
+            campo: err.path,
+            mensaje: err.msg
+        }));
+
+        const fechaError = mappedErrors.find(err => err.campo === 'fecha_nacimiento');
+
         return res.status(400).json({
-            msg: 'Error de validación',
-            errors: errors.array().map(err => ({
-                campo: err.path,
-                mensaje: err.msg
-            }))
+            msg: fechaError ? 'La fecha ingresada no es correcta' : 'Error de validación',
+            errors: mappedErrors
         });
     }
     next();
@@ -133,7 +137,7 @@ const validateUserUpdate =[
 
     body('fecha_nacimiento')
         .optional()
-        .isDate().withMessage('Fecha de nacimiento inválida')
+        .isDate().withMessage('La fecha ingresada no es correcta')
         .custom((value) => {
             const birthDate = new Date(value);
             const today = new Date();

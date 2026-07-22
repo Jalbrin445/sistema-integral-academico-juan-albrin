@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = require('../config/jwtSecret');
 
 const verificarToken = (req, res, next) => {
     
-    let token = req.cookies.token;
+    let token = req.cookies?.token;
 
     if (!token) {
         const authHeader = req.headers['authorization'];
@@ -17,7 +18,7 @@ const verificarToken = (req, res, next) => {
         });
     }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
 
         req.usuario = {
             id: decoded.id,

@@ -8,6 +8,7 @@ const FormularioRegistro = () => {
     const navigate = useNavigate();
     const { id_usuario } = useParams(); // Detecta si estamos editando
     const [grupos, setGrupos] = useState([]);
+    const [errorFecha, setErrorFecha] = useState('');
     const [formData, setFormData] = useState({
         tipo_identificacion: 'CC',
         numero_identificacion: '',
@@ -74,13 +75,42 @@ const FormularioRegistro = () => {
     }, [id_usuario]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        if (name === 'fecha_nacimiento') {
+            if (!value) {
+                setErrorFecha('');
+                return;
+            }
+
+            const fecha = new Date(value);
+            const hoy = new Date();
+            const edad = hoy.getFullYear() - fecha.getFullYear();
+            const fechaValida = !Number.isNaN(fecha.getTime()) && edad >= 5 && edad <= 100;
+            setErrorFecha(fechaValida ? '' : 'La fecha ingresada no es correcta');
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const fecha = formData.fecha_nacimiento;
+        if (fecha) {
+            const dateValue = new Date(fecha);
+            const hoy = new Date();
+            const edad = hoy.getFullYear() - dateValue.getFullYear();
+            const fechaValida = !Number.isNaN(dateValue.getTime()) && edad >= 5 && edad <= 100;
+
+            if (!fechaValida) {
+                setErrorFecha('La fecha ingresada no es correcta');
+                return;
+            }
+        }
+
+        setErrorFecha('');
+
         try {
-            
             const url = id_usuario 
                 ? `/usuarios/actualizar/${id_usuario}` 
                 : '/usuarios/registro';
@@ -98,7 +128,12 @@ const FormularioRegistro = () => {
                 navigate('/MenuPrincipal/admin/usuarios');
             });
         } catch (err) {
-            Swal.fire('Error', err.response?.data?.msg || 'Error en la operación', 'error');
+            const mensajeValidacion = err.response?.data?.errors?.find(error => error.campo === 'fecha_nacimiento')?.mensaje
+                || err.response?.data?.msg
+                || 'Error en la operación';
+
+            setErrorFecha(mensajeValidacion);
+            Swal.fire('Error', mensajeValidacion, 'error');
         }
     };
 
@@ -160,7 +195,20 @@ const FormularioRegistro = () => {
 
                             <div className="col-md-4 mb-3">
                                 <label for="fecha_nacimiento" className="form-label">Fecha de Nacimiento</label>
-                                <input id="fecha_nacimiento" type="date" className="form-control" name="fecha_nacimiento" value={formData.fecha_nacimiento} required onChange={handleChange} />
+                                <input
+                                    id="fecha_nacimiento"
+                                    type="date"
+                                    className={`form-control ${errorFecha ? 'is-invalid' : ''}`}
+                                    name="fecha_nacimiento"
+                                    value={formData.fecha_nacimiento}
+                                    required
+                                    onChange={handleChange}
+                                />
+                                {errorFecha && (
+                                    <div className="invalid-feedback d-block mt-2 fw-semibold" style={{ color: '#dc3545' }}>
+                                        {errorFecha}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="col-md-4 mb-3">
