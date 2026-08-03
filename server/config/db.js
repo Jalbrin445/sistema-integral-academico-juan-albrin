@@ -11,8 +11,11 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'sia_db',
     port: process.env.DB_PORT || 3306,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 3,
     queueLimit: 0,
+    acquireTimeout: 10000,
+    timeout: 10000,
+    reconnect: true,
     ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {})
 });
 
