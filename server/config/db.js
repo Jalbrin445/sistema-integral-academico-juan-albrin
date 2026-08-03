@@ -1,7 +1,8 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
-const useSsl = process.env.DB_SSL === 'true' || process.env.DB_SSL === '1';
+const dbHost = process.env.DB_HOST || '';
+const useSsl = process.env.DB_SSL === 'true' || process.env.DB_SSL === '1' || dbHost.includes('clever-cloud') || dbHost.includes('mysql.services');
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',

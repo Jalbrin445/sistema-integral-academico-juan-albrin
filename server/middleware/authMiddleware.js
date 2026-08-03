@@ -1,5 +1,12 @@
+require('dotenv').config();
+
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = require('../config/jwtSecret');
+
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'development-fallback-secret');
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET is required in production');
+}
 
 const verificarToken = (req, res, next) => {
     

@@ -1,7 +1,14 @@
+require('dotenv').config();
+
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = require('../config/jwtSecret');
+
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'development-fallback-secret');
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET is required in production');
+}
 
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {

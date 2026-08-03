@@ -1,11 +1,11 @@
-const crypto = require('crypto');
-
-const fallbackSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
-    ? crypto.randomBytes(32).toString('hex')
-    : 'development-fallback-secret');
+const isProduction = process.env.NODE_ENV === 'production';
 
 if (!process.env.JWT_SECRET) {
-    console.warn('⚠️ JWT_SECRET no configurado. Se usará un secreto temporal para esta ejecución. Defínelo en producción.');
+    if (isProduction) {
+        throw new Error('JWT_SECRET is required in production');
+    }
+
+    console.warn('JWT_SECRET no configurado. Se usará un secreto temporal solo para desarrollo.');
 }
 
-module.exports = fallbackSecret;
+module.exports = process.env.JWT_SECRET || 'development-fallback-secret';
