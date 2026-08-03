@@ -11,3 +11,6 @@ logs/
 dist/
 build/
 .DS_Store
+*.sql
+!estructura-BD-sia-api.sql
+!seed_data.sql
